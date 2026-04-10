@@ -1,0 +1,76 @@
+/* pages/orders/detail/index.wxss */
+.page-container { min-height: 100vh; background: #f5f5f5; }
+
+.brand-header { display: flex; align-items: center; gap: 20rpx; padding: 30rpx 24rpx; background: linear-gradient(135deg, #FF2442, #FF6B81); }
+.brand-logo { width: 80rpx; height: 80rpx; line-height: 80rpx; border-radius: 50%; background: rgba(255,255,255,.25); color: #fff; font-size: 36rpx; font-weight:700; text-align:center; }
+.brand-info { flex:1; }
+.brand-name { font-size:34rpx; font-weight:600; color:#fff; }
+.brand-meta { font-size:24rpx; color:rgba(255,255,255,.7); margin-top:4rpx; }
+.meta-content-type { color: rgba(255,255,255,.9); }
+.header-btns { display:flex; gap:12rpx; }
+.icon-btn { width:60rpx; height:60rpx; line-height:56rpx; text-align:center; border-radius:50%; background:rgba(255,255,255,.2); font-size:28rpx; }
+
+.detail-scroll { height: calc(100vh - 150rpx); }
+.section-card { margin:20rpx; padding:28rpx; background:#fff; border-radius:16rpx; box-shadow:0 2rpx 12rpx rgba(0,0,0,.04); }
+.section-title { font-size:30rpx; font-weight:600; color:#333; margin-bottom:22rpx; }
+.flex-between{display:flex;justify-content:space-between;align-items:center;}
+
+.text-money { color:#FF2442; font-weight:600; }
+
+/* 利润分析 */
+.profit-grid { display:flex; flex-wrap:wrap; gap:16rpx; margin-bottom:8rpx; }
+.pf-item { flex:1; min-width:40%; padding:16rpx; background:#FAFAFA; border-radius:12rpx; text-align:center; }
+.pf-item.highlight { background:#FFF9F5; border-left:6rpx solid #FF2442; }
+.pf-label { display:block; font-size:22rpx; color:#999; margin-bottom:6rpx; }
+.pf-val { display:block; font-size:28rpx; color:#333; font-weight:500; }
+.pf-val.big { font-size:36rpx; }
+.pf-val.red { color:#FF4D4F; }
+.divider { height:1rpx; background:#F0F0F0; margin:16rpx 0; }
+
+.profit-result { }
+.pr-row { display:flex; justify-content:space-between; align-items:center; padding:14rpx 0; }
+.pr-row.final { padding-top:18rpx; border-top:2rpx solid #FFE4E1; }
+.pr-label { font-size:28rpx; color:#333; font-weight:500; }
+.pr-val.strong { font-size:36rpx; font-weight:700; }
+.pr-val.green { color:#52C41A; }
+
+.cost-row { display:flex; justify-content:space-between; padding:10rpx 0 10rpx 32rpx; }
+.cost-label { font-size:26rpx; color:#888; }
+.cost-val { font-size:26rpx; color:#FF4D4F; }
+
+.tax-row { display:flex; justify-content:space-between; padding:12rpx 0 0; margin-top:8rpx; border-top:1rpx dashed #EEE; }
+.tax-label { font-size:24rpx; color:#bbb; }
+.tax-val { font-size:26rpx; color:#FAAD14; }
+
+/* 时间线 */
+.time-list { display:flex; flex-direction:column; gap:14rpx; }
+.time-item { display:flex; align-items:center; gap:12rpx; }
+.time-dot { width:16rpx; height:16rpx; border-radius:50%; background:#DDD; }
+.time-dot.active { background:#FF2442; box-shadow:0 0 8rpx rgba(255,36,66,.3); }
+.time-label { font-size:26rpx; color:#666; width:140rpx; }
+.time-value { font-size:28rpx; color:#333; font-weight:500; }
+
+/* 进度条 */
+.progress-steps { display:flex; flex-wrap:wrap; gap:8rpx; padding-top:10rpx; }
+.step-item { display:flex; align-items:center; gap:8rpx; }
+.step-circle { width:52rpx; height:52rpx; line-height:48rpx; border-radius:50%; border:3rpx solid #E8E8E8; font-size:24rpx; text-align:center; background:#F8F8F8; }
+.step-circle.active { border-color:#FF2442; background:#FFF1F0; transform:scale(1.1); }
+.step-circle.abnormal { border-color:#D48806; background:#FFFBE6; }
+.step-item.done .step-circle { border-color:#52C41A; background:#F6FFED; opacity:.7; }
+.step-text-wrap { display:flex; flex-direction:column; align-items:center; gap:2rpx; }
+.step-text { font-size:22rpx; color:#666; white-space:nowrap; }
+.step-item.active .step-text { color:#FF2442; font-weight:600; }
+.step-item.done .step-text { color:#AAA; }
+.step-line { width:2rpx; height:16rpx; background:#E8E8E8; }
+.abnormal-item { margin-left:auto; }
+
+.change-status-btn { font-size:24rpx; color:#1890FF; padding:6rpx 16rpx; background:#F0F8FF; border-radius:16rpx; }
+
+.notes-text { font-size:28rpx; color:#555; line-height:1.6; white-space:pre-wrap; }
+
+/* 商单信息（内容形式 & 排竞） */
+.info-list { display:flex; flex-direction:column; gap:12rpx; }
+.info-row { display:flex; justify-content:space-between; align-items:center; padding:10rpx 0; }
+.info-label { font-size:26rpx; color:#888; }
+.info-val { font-size:28rpx; color:#333; font-weight:500; }
+.info-val.highlight-blue { color:#1890FF; }

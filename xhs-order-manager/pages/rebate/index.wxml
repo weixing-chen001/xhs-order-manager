@@ -1,0 +1,148 @@
+<view class="page-container">
+  <!-- 概览统计 -->
+  <view class="stats-bar">
+    <view class="stat-item">
+      <view class="stat-val">¥{{totalExpected}}</view>
+      <view class="stat-name">应收总计</view>
+    </view>
+    <view class="stat-item highlight">
+      <view class="stat-val green">¥{{totalReceived}}</view>
+      <view class="stat-name">已收返点</view>
+    </view>
+    <view class="stat-item">
+      <view class="stat-val orange">¥{{totalPending}}</view>
+      <view class="stat-name">待收返点</view>
+    </view>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="action-bar">
+    <view class="add-rebate-btn" bindtap="showAdd">+ 记录返点</view>
+  </view>
+
+  <!-- 返点列表 -->
+  <view class="rebate-list" wx:if="{{rebates.length > 0}}">
+    <view class="rebate-item"
+          wx:for="{{rebates}}"
+          wx:key="id">
+      <view class="rebate-main">
+        <view class="rebate-brand">{{item.brandName}}</view>
+        <view class="rebate-amount text-money">+¥{{item.amountText}}</view>
+      </view>
+      <view class="rebate-info">
+        <text class="rebate-type text-gray">{{item.type === 'percent' ? item.rate + '%返点' : item.type === 'product' ? '产品置换' : '固定返点'}}</text>
+        <text wx:if="{{item.dueDate}}" class="rebate-date text-gray"> · 到期：{{item.dueDate}}</text>
+      </view>
+      <view class="rebate-footer">
+        <view class="tag {{item.statusCls}}">{{item.statusLabel}}</view>
+        <view class="rebate-actions">
+          <view class="action-btn green-btn"
+                wx:if="{{item.status !== 'received'}}"
+                data-id="{{item.id}}"
+                bindtap="markReceived">✓ 已收</view>
+          <view class="action-btn edit-btn"
+                data-id="{{item.id}}"
+                bindtap="editRebate">编辑</view>
+          <view class="action-btn del-btn"
+                data-id="{{item.id}}"
+                bindtap="deleteRebate">删除</view>
+        </view>
+      </view>
+      <view class="rebate-notes text-gray" wx:if="{{item.notes}}">💬 {{item.notes}}</view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{rebates.length === 0}}">
+    <view class="empty-icon">🎁</view>
+    <view class="empty-text">还没有返点记录</view>
+    <view class="empty-sub">点击「记录返点」开始管理你的返点</view>
+  </view>
+
+  <!-- 添加/编辑弹窗 -->
+  <view class="modal-mask" wx:if="{{showAddForm}}" bindtap="hideAdd"></view>
+  <view class="modal-panel" wx:if="{{showAddForm}}">
+    <view class="modal-header">
+      <view class="modal-title">{{editId ? '编辑返点' : '记录返点'}}</view>
+      <view class="modal-close" bindtap="hideAdd">✕</view>
+    </view>
+    <scroll-view scroll-y style="max-height:70vh">
+      <view class="form-group">
+        <view class="form-label required">品牌名称</view>
+        <view wx:if="{{orders.length > 0}}" class="input-with-picker">
+          <input class="form-input" placeholder="品牌名" data-field="brandName" bindinput="onFormInput" value="{{form.brandName}}" />
+          <picker range="{{orderNames}}" bindchange="onOrderChange">
+            <view class="pick-btn">从商单选</view>
+          </picker>
+        </view>
+        <input wx:else class="form-input" placeholder="品牌名" data-field="brandName" bindinput="onFormInput" value="{{form.brandName}}" />
+      </view>
+
+      <view class="form-group">
+        <view class="form-label">返点类型</view>
+        <picker mode="selector" range="{{typeOptions}}" value="{{typeIdx}}" bindchange="onTypeChange">
+          <view class="picker-view">
+            <text>{{typeOptions[typeIdx]}}</text>
+            <text class="picker-arrow">›</text>
+          </view>
+        </picker>
+      </view>
+
+      <view class="form-group" wx:if="{{form.type === 'percent'}}">
+        <view class="form-label">返点比例（%）</view>
+        <view class="input-suffix-wrap">
+          <input class="form-input" type="digit" placeholder="如：10" data-field="rate" bindinput="onFormInput" value="{{form.rate}}" />
+          <text class="input-suffix">%</text>
+        </view>
+      </view>
+
+      <view class="form-group">
+        <view class="form-label required">返点金额（元）</view>
+        <view class="input-prefix-wrap">
+          <text class="input-prefix">¥</text>
+          <input class="form-input input-with-prefix" type="digit" placeholder="返点金额" data-field="amount" bindinput="onFormInput" value="{{form.amount}}" />
+        </view>
+      </view>
+
+      <view class="form-group">
+        <view class="form-label">到期日期</view>
+        <picker mode="date" value="{{form.dueDate}}" bindchange="onDueDateChange">
+          <view class="picker-view">
+            <text>{{form.dueDate || '选择到期日期'}}</text>
+            <text class="picker-arrow">📅</text>
+          </view>
+        </picker>
+      </view>
+
+      <view class="form-group">
+        <view class="form-label">状态</view>
+        <picker mode="selector" range="{{statusOptions}}" value="{{statusIdx}}" bindchange="onStatusChange">
+          <view class="picker-view">
+            <text>{{statusOptions[statusIdx]}}</text>
+            <text class="picker-arrow">›</text>
+          </view>
+        </picker>
+      </view>
+
+      <view class="form-group" wx:if="{{form.status === 'received'}}">
+        <view class="form-label">收取日期</view>
+        <picker mode="date" value="{{form.receivedDate}}" bindchange="onReceivedDateChange">
+          <view class="picker-view">
+            <text>{{form.receivedDate || '选择收取日期'}}</text>
+            <text class="picker-arrow">📅</text>
+          </view>
+        </picker>
+      </view>
+
+      <view class="form-group">
+        <view class="form-label">备注</view>
+        <input class="form-input" placeholder="可选备注" data-field="notes" bindinput="onFormInput" value="{{form.notes}}" />
+      </view>
+    </scroll-view>
+
+    <view class="modal-btns">
+      <view class="modal-btn cancel" bindtap="hideAdd">取消</view>
+      <view class="modal-btn confirm" bindtap="saveRebate">{{editId ? '保存修改' : '记录返点'}}</view>
+    </view>
+  </view>
+</view>

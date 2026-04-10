@@ -1,0 +1,110 @@
+<view class="page-container">
+  <!-- 周期切换 -->
+  <view class="period-tabs">
+    <view class="period-tab {{period==='month'?'active':''}}" data-value="month" bindtap="onPeriodChange">本月</view>
+    <view class="period-tab {{period==='quarter'?'active':''}}" data-value="quarter" bindtap="onPeriodChange">本季</view>
+    <view class="period-tab {{period==='year'?'active':''}}" data-value="year" bindtap="onPeriodChange">今年</view>
+    <view class="period-tab {{period==='all'?'active':''}}" data-value="all" bindtap="onPeriodChange">全部</view>
+  </view>
+
+  <scroll-view scroll-y>
+
+    <!-- 核心指标：利润 -->
+    <view class="metrics-grid">
+      <view class="metric-card profit-main">
+        <text class="metric-label">📊 预期净利润</text>
+        <text class="metric-val text-money-big">¥{{stats.totalNet}}</text>
+        <text class="metric-sub">{{stats.totalCount}}单有效 · 异常{{stats.abnormalCount}}单</text>
+      </view>
+      <view class="metric-card">
+        <text class="metric-label">平均利润率</text>
+        <text class="metric-val">{{stats.avgProfitRate}}%</text>
+      </view>
+      <view class="metric-card">
+        <text class="metric-label">总薯条成本</text>
+        <text class="metric-val orange">¥{{stats.totalPotatoCost}}</text>
+      </view>
+      <view class="metric-card">
+        <text class="metric-label">总女工成本</text>
+        <text class="metric-val orange">¥{{stats.totalLaborCost}}</text>
+      </view>
+      <view class="metric-card">
+        <text class="metric-label">税点预估</text>
+        <text class="metric-val tax">≈¥{{stats.totalTax}}</text>
+      </view>
+      <view class="metric-card warn" wx:if="{{stats.abnormalCount > 0}}">
+        <text class="metric-label">⚠️ 异常商单</text>
+        <text class="metric-val warn-num">{{stats.abnormalCount}}单</text>
+      </view>
+    </view>
+
+    <!-- 利润说明 -->
+    <view class="section-card formula-card">
+      <view class="section-title">🧮 利润公式说明</view>
+      <view class="formula-list">
+        <view class="formula-item">
+          <text class="f-name">净利润</text>
+          <text class="f-formula">= 报价 - 线上返点 - 线下返点 - 薯条成本 - 女工成本</text>
+        </view>
+        <view class="formula-item">
+          <text class="f-name">利润率</text>
+          <text class="f-formula">= 净利润 ÷ 报价 × 100%</text>
+        </view>
+        <view class="formula-item">
+          <text class="f-name">税点预估</text>
+          <text class="f-formula">= (去返点利润 - 薯条成本) × 1%</text>
+        </view>
+      </view>
+      <view class="formula-hint text-gray">💡 除「异常」状态外，所有商单均计入利润汇总，异常状态自动剔除</view>
+    </view>
+
+    <!-- 商单明细列表 -->
+    <view class="section-card" wx:if="{{orderList.length > 0}}">
+      <view class="section-title">📋 商单明细</view>
+      
+      <view class="ol-item" wx:for="{{orderList}}" wx:key="id" data-id="{{item.id}}" bindtap="goToDetail">
+        <view class="ol-top">
+          <text class="ol-brand">{{item.brandName}}<text wx:if="{{item.productName}}" class="ol-product"> · {{item.productName}}</text></text>
+          <tag class="tag {{item.progressInfo.cls}}">{{item.progressInfo.label}}</tag>
+        </view>
+        <view class="ol-middle">
+          <text class="ol-price">¥{{item.price}}</text>
+          <text class="ol-profit {{item.isValidForProfit ? 'valid' : 'invalid'}}">
+            净利 ¥{{item.profit.netProfit}} ({{item.profit.profitRate}}%)
+            <text wx:if="{{!item.isValidForBalanceProfit}}" class="excluded-tag">(未计入)</text>
+          </text>
+        </view>
+        <view class="ol-tags" wx:if="{{item.contentTypeText || item.competitionText}}">
+          <text wx:if="{{item.contentTypeText}}" class="ol-tag">📝 {{item.contentTypeText}}</text>
+          <text wx:if="{{item.competitionText}}" class="ol-tag blue">🎯 {{item.competitionText}}</text>
+        </view>
+        <view class="ol-bottom text-gray">
+          档期：{{item.scheduleDate || '-'}}
+          <text class="ol-date">创建：{{item.createTime}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 进度分布 -->
+    <view class="section-card" wx:if="{{progressDist.length > 0}}">
+      <view class="section-title">📊 推进状态分布</view>
+      <view class="prog-bar-wrap" wx:for="{{progressDist}}" wx:key="value">
+        <view class="prog-bar-row">
+          <text class="prog-icon">{{item.icon}}</text>
+          <text class="prog-name">{{item.label}}</text>
+          <text class="prog-count">{{item.count}}单</text>
+        </view>
+        <view class="prog-fill-bg"><view class="prog-fill" style="width:{{item.count / orderList.length * 100}}%"></view></view>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{stats.totalCount === 0 && orderList.length === 0}}">
+      <view class="empty-icon">📊</view>
+      <view class="empty-text">暂无统计数据</view>
+      <view class="empty-sub">添加商单后这里会显示数据统计</view>
+    </view>
+
+    <view style="height:40rpx"></view>
+  </scroll-view>
+</view>

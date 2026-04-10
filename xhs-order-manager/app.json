@@ -1,0 +1,35 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/orders/list/index",
+    "pages/orders/add/index",
+    "pages/orders/detail/index",
+    "pages/calendar/index",
+    "pages/quote/index",
+    "pages/rebate/index",
+    "pages/brands/list/index",
+    "pages/brands/detail/index",
+    "pages/stats/index"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#FF2442",
+    "navigationBarTitleText": "商单管家",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#f5f5f5"
+  },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#FF2442",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "list": [
+      { "pagePath": "pages/index/index", "text": "首页" },
+      { "pagePath": "pages/calendar/index", "text": "日历" },
+      { "pagePath": "pages/stats/index", "text": "统计" },
+      { "pagePath": "pages/brands/list/index", "text": "品牌" }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

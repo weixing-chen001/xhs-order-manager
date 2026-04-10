@@ -1,0 +1,49 @@
+<view class="page-container">
+  <!-- 搜索栏 -->
+  <view class="search-bar">
+    <view class="search-input-wrap">
+      <text class="search-icon">🔍</text>
+      <input class="search-input" placeholder="搜索品牌、行业、联系人..." value="{{keyword}}" bindinput="onSearchInput" />
+    </view>
+    <view class="add-btn" bindtap="goToAdd">+添加</view>
+  </view>
+
+  <!-- 导出按钮 -->
+  <view class="export-bar" wx:if="{{brands.length > 0}}">
+    <view class="export-btn" bindtap="exportToExcel">📥 导出联系方式 (Excel/CSV)</view>
+  </view>
+
+  <!-- 品牌列表 -->
+  <view class="brand-list" wx:if="{{filtered.length > 0}}">
+    <view class="brand-card" wx:for="{{filtered}}" wx:key="id" data-id="{{item.id}}" bindtap="goToDetail">
+      <view class="brand-avatar"><text class="avatar-text">{{item.initial}}</text></view>
+      <view class="brand-info">
+        <view class="brand-name-row">
+          <text class="brand-name">{{item.name}}</text>
+          <text class="brand-industry" wx:if="{{item.industry}}">{{item.industry}}</text>
+        </view>
+        <view class="contact-info" wx:if="{{item.contactName}}">
+          <text class="contact-icon">👤</text>
+          <text class="contact-name">{{item.contactName}}</text>
+        </view>
+        <view class="contact-info" wx:if="{{item.contactPhone}}">
+          <text class="contact-icon">📱</text>
+          <text class="contact-phone text-gray">{{item.contactPhone}}</text>
+        </view>
+        <view class="brand-stats">
+          <text class="stat-text">共 {{item.orderCount}} 单</text>
+          <text class="stat-sep">·</text>
+          <text class="stat-text text-money">¥{{item.totalRevenueText}}</text>
+        </view>
+      </view>
+      <view class="brand-action"><text class="more-icon">›</text></view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{filtered.length === 0}}">
+    <view class="empty-icon">🏢</view>
+    <view class="empty-text">{{keyword ? '未找到匹配结果' : '还没有品牌联系方式'}}</view>
+    <view class="empty-sub" wx:if="{{!keyword}}">点击「+添加」录入品牌信息</view>
+  </view>
+</view>

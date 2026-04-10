@@ -1,0 +1,117 @@
+<view class="page-container">
+  <scroll-view scroll-y>
+    <!-- 基本信息 -->
+    <view class="section-card">
+      <view class="section-title">🏢 品牌信息</view>
+      
+      <view class="form-group">
+        <view class="form-label required">品牌名称</view>
+        <input class="form-input" placeholder="品牌名称" data-field="name" bindinput="onInput" value="{{form.name}}" />
+      </view>
+
+      <view class="form-group">
+        <view class="form-label">所属行业</view>
+        <picker mode="selector" range="{{industries}}" value="{{industryIdx}}" bindchange="onIndustryChange">
+          <view class="picker-view">
+            <text>{{form.industry || '选择行业'}}</text>
+            <text class="picker-arrow">›</text>
+          </view>
+        </picker>
+      </view>
+
+      <view class="form-group">
+        <view class="form-label">品牌官网</view>
+        <input class="form-input" placeholder="https://..." data-field="website" bindinput="onInput" value="{{form.website}}" />
+      </view>
+
+      <view class="form-group">
+        <view class="form-label">备注</view>
+        <textarea class="form-textarea" placeholder="关于这个品牌的备注信息..." data-field="notes" bindinput="onInput" value="{{form.notes}}" />
+      </view>
+    </view>
+
+    <!-- 联系人信息 -->
+    <view class="section-card">
+      <view class="section-title">👤 联系方式</view>
+      
+      <view class="form-group">
+        <view class="form-label">联系人姓名</view>
+        <input class="form-input" placeholder="BD/对接人姓名" data-field="contactName" bindinput="onInput" value="{{form.contactName}}" />
+      </view>
+
+      <view class="form-group">
+        <view class="form-label">职位/角色</view>
+        <input class="form-input" placeholder="如：品牌BD、小红书负责人" data-field="contactTitle" bindinput="onInput" value="{{form.contactTitle}}" />
+      </view>
+
+      <view class="form-group">
+        <view class="form-label">微信号</view>
+        <view class="input-with-copy">
+          <input class="form-input" placeholder="微信号" data-field="contactWx" bindinput="onInput" value="{{form.contactWx}}" />
+          <view class="copy-inline" wx:if="{{form.contactWx}}" data-text="{{form.contactWx}}" bindtap="copyText">复制</view>
+        </view>
+      </view>
+
+      <view class="form-group">
+        <view class="form-label">手机号</view>
+        <view class="input-with-copy">
+          <input class="form-input" type="number" placeholder="手机号码" data-field="contactPhone" bindinput="onInput" value="{{form.contactPhone}}" />
+          <view class="call-inline" wx:if="{{form.contactPhone}}" bindtap="callPhone">拨打</view>
+        </view>
+      </view>
+
+      <view class="form-group">
+        <view class="form-label">邮箱</view>
+        <input class="form-input" placeholder="邮箱地址" data-field="contactEmail" bindinput="onInput" value="{{form.contactEmail}}" />
+      </view>
+    </view>
+
+    <!-- 合作信息 -->
+    <view class="section-card">
+      <view class="section-title">💼 合作信息</view>
+      
+      <view class="form-group">
+        <view class="form-label">返点政策</view>
+        <input class="form-input" placeholder="如：按合同约定10%返点" data-field="rebatePolicy" bindinput="onInput" value="{{form.rebatePolicy}}" />
+      </view>
+
+      <view class="form-group">
+        <view class="form-label">常规返点率（%）</view>
+        <view class="input-suffix-wrap">
+          <input class="form-input" type="digit" placeholder="如：10" data-field="defaultRebateRate" bindinput="onInput" value="{{form.defaultRebateRate}}" />
+          <text class="input-suffix">%</text>
+        </view>
+      </view>
+
+      <view class="form-group">
+        <view class="form-label">合作历史备注</view>
+        <textarea class="form-textarea" placeholder="过往合作记录、注意事项等..." data-field="cooperationHistory" bindinput="onInput" value="{{form.cooperationHistory}}" />
+      </view>
+    </view>
+
+    <!-- 相关商单 -->
+    <view class="section-card" wx:if="{{relatedOrders.length > 0}}">
+      <view class="section-title">📋 相关商单 ({{relatedOrders.length}})</view>
+      <view class="order-item"
+            wx:for="{{relatedOrders}}"
+            wx:key="id"
+            data-id="{{item.id}}"
+            bindtap="goToOrder">
+        <view class="order-row">
+          <text class="order-content">{{item.contentType}}</text>
+          <text class="order-price text-money">¥{{item.priceText}}</text>
+        </view>
+        <view class="order-meta flex-between">
+          <text class="text-gray">{{item.createTime}}</text>
+          <view class="tag {{item.statusInfo.cls}}">{{item.statusInfo.label}}</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 保存/删除按钮 -->
+    <view class="action-area">
+      <button class="btn-save" bindtap="save">{{isEdit ? '保存修改' : '添加品牌'}}</button>
+      <button class="btn-delete" wx:if="{{isEdit}}" bindtap="deleteBrand">删除品牌</button>
+    </view>
+  </scroll-view>
+</view>

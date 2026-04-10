@@ -1,0 +1,73 @@
+/* pages/stats/index.wxss */
+.page-container { min-height: 100vh; background: #f5f5f5; }
+
+.period-tabs { display:flex; padding:20rpx; gap:12rpx; background:#fff; position:sticky;top:0;z-index:10; }
+.period-tab { flex:1; text-align:center; height:68rpx; line-height:68rpx; border-radius:34rpx; font-size:26rpx; color:#666; background:#F5F5F5; }
+.period-tab.active { background:#FF2442; color:#fff; font-weight:600; }
+
+/* 指标卡 */
+.metrics-grid { display:flex; flex-wrap:wrap; padding:16rpx; gap:14rpx; }
+.metric-card { width:calc(50% - 7rpx); padding:24rpx; background:#fff; border-radius:14rpx; box-shadow:0 2rpx 8rpx rgba(0,0,0,.03); text-align:center; }
+.metric-card.profit-main { width:100%; background:linear-gradient(135deg,#FFF5F5,#FFF); border-left:8rpx solid #FF2442; }
+.metric-card.warn { border-left:6rpx solid #FAAD14; }
+.metric-label { display:block; font-size:22rpx; color:#999; margin-bottom:8rpx; }
+.metric-val { display:block; font-size:36rpx; font-weight:700; color:#333; }
+.metric-val.text-money-big { color:#FF2442; font-size:48rpx; }
+.metric-val.tax { color:#FAAD14; font-size:28rpx; }
+.metric-val.orange { color:#FA8C16; font-size:32rpx; }
+.metric-val.warn-num { color:#D48806; font-size:36rpx; }
+.metric-sub { display:block; font-size:22rpx; color:#bbb; margin-top:6rpx; }
+
+.section-card { margin:20rpx; padding:28rpx; background:#fff; border-radius:16rpx; box-shadow:0 2rpx 12rpx rgba(0,0,0,.04); }
+.section-title { font-size:30rpx; font-weight:600; color:#333; margin-bottom:20rpx; }
+
+.text-gray { color:#999; font-size:24rpx; }
+
+/* 公式说明 */
+.formula-card { background:#FAFCFF; border-left:6rpx solid #1890FF; }
+.formula-list { display:flex; flex-direction:column; gap:14rpx; }
+.formula-item { display:flex; flex-direction:column; gap:4rpx; }
+.f-name { font-size:26rpx; color:#1890FF; font-weight:600; }
+.f-formula { font-size:24rpx; color:#555; }
+.formula-hint { margin-top:12rpx; padding-top:12rpx; border-top:1rpx dashed #DDD; font-size:22rpx; }
+
+/* 商单明细 */
+.ol-item { padding:20rpx 0; border-bottom:1rpx solid #F5F5F5; }
+.ol-item:last-child { border-bottom:none; }
+.ol-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:10rpx; }
+.ol-brand { font-size:29rpx; font-weight:500; color:#333; }
+.ol-product { font-size:25rpx; color:#999; font-weight:400; }
+.ol-middle { display:flex; gap:30rpx; align-items:center; margin-bottom:8rpx; }
+.ol-price { font-size:30rpx; color:#FF2442; font-weight:600; }
+.ol-profit { font-size:26rpx; }
+.ol-profit.valid { color:#52C41A; font-weight:500; }
+.ol-profit.invalid { color:#CCC; }
+.excluded-tag { font-size:20rpx; color:#FAAD14; }
+.ol-bottom { display:flex; justify-content:space-between; font-size:22rpx; }
+.ol-tags { display:flex; gap:12rpx; margin-top:8rpx; flex-wrap:wrap; }
+.ol-tag { font-size:21rpx; color:#888; background:#F5F5F5; padding:2rpx 14rpx; border-radius:8rpx; }
+.ol-tag.blue { color:#1890FF; background:#E6F7FF; }
+.tag { display:inline-block; padding:4rpx 14rpx; border-radius:8rpx; font-size:21rpx; font-weight:500; }
+.prog-scheduled   { background:#F0F0F0;color:#666; }
+.prog-sent        { background:#E6F7FF;color:#1890FF; }
+.prog-content     { background:#FFF7E6;color:#FA8C16; }
+.prog-product     { background:#F6FFED;color:#52C41A; }
+.prog-shot        { background:#F9F0FF;color:#722ED1; }
+.prog-draft       { background:#FFF1F0;color:#FF4D4F; }
+.prog-finalized   { background:#E6F7FF;color:#096DD9; }
+.prog-published   { background:#F6FFED;color:#389E0D; }
+.prog-abnormal    { background:#FFFBE6;color:#D48806; }
+
+/* 进度分布 */
+.prog-bar-wrap { margin-bottom:18rpx; }
+.prog-bar-row { display:flex; align-items:center; gap:10rpx; margin-bottom:6rpx; }
+.prog-icon { font-size:26rpx; }
+.prog-name { font-size:24rpx; color:#555; min-width:160rpx; }
+.prog-count { font-size:24rpx; color:#999; margin-left:auto; }
+.prog-fill-bg { height:12rpx; background:#F0F0F0; border-radius:6rpx; overflow:hidden; }
+.prog-fill { height:100%; background:linear-gradient(to right, #FF2442, #FF6B81); border-radius:6rpx; transition:width .3s; }
+
+.empty-state { display:flex; flex-direction:column; align-items:center; padding:120rpx 40rpx; }
+.empty-icon { font-size:80rpx; }
+.empty-text { font-size:32rpx; color:#666; margin-top:20rpx; }
+.empty-sub { font-size:26rpx; color:#bbb; margin-top:10rpx; }

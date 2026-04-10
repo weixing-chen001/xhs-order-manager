@@ -1,0 +1,48 @@
+<view class="page-container">
+  <view class="search-bar">
+    <view class="search-input-wrap">
+      <text class="search-icon">🔍</text>
+      <input class="search-input" placeholder="搜索品牌、产品..." value="{{keyword}}" bindinput="onSearchInput" />
+    </view>
+    <view class="add-btn" bindtap="goToAdd">+新建</view>
+  </view>
+
+  <!-- 进度筛选 -->
+  <scroll-view class="filter-tabs" scroll-x>
+    <view class="filter-inner">
+      <view wx:for="{{progressOptions}}" wx:key="value"
+            class="filter-tab {{progressFilter === item.value ? 'active' : ''}}"
+            data-value="{{item.value}}"
+            bindtap="onProgressFilter">
+        {{item.label}}
+      </view>
+    </view>
+  </scroll-view>
+
+  <view class="order-list" wx:if="{{filteredOrders.length > 0}}">
+    <view class="order-card" wx:for="{{filteredOrders}}" wx:key="id">
+      <view class="order-card-inner" data-id="{{item.id}}" bindtap="goToDetail">
+        <view class="order-header">
+          <view class="brand-name">{{item.brandName}}</view>
+          <tag class="tag {{item.progressInfo.cls}}">{{item.progressInfo.label}}</tag>
+        </view>
+        <view class="order-body">
+          <view class="order-info-row"><text class="info-icon">📦</text><text>{{item.productName || '未填写产品'}}<text wx:if="{{item.contentTypeText}}" class="info-tag"> · {{item.contentTypeText}}</text></text></view>
+          <view class="order-info-row" wx:if="{{item.competitionText}}"><text class="info-icon">🎯</text><text>排竞 {{item.competitionText}}</text></view>
+          <view class="order-info-row" wx:if="{{item.scheduleDate}}"><text class="info-icon">📅</text><text>档期：{{item.scheduleDate}}</text></view>
+          <view class="order-info-row" wx:if="{{item.notes}}"><text class="info-icon">💬</text><text class="notes-text">{{item.notes}}</text></view>
+        </view>
+        <view class="order-footer">
+          <view class="order-price"><text class="price-label">报价</text><text class="price-num text-money">¥{{item.price}}</text></view>
+          <view class="order-profit text-green" wx:if="{{item.profit.netProfit}}">净利 ¥{{item.profit.netProfit}} ({{item.profit.profitRate}}%)</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="empty-state" wx:else>
+    <view class="empty-icon">📋</view>
+    <view class="empty-text">暂无商单记录</view>
+    <view class="empty-sub">点击「+新建」添加</view>
+  </view>
+</view>

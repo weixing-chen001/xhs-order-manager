@@ -1,0 +1,132 @@
+<view class="page-container" wx:if="{{order}}">
+  <!-- 头部 -->
+  <view class="brand-header">
+    <view class="brand-logo">{{order.brandInitial}}</view>
+    <view class="brand-info">
+      <view class="brand-name">{{order.brandName}}</view>
+      <view class="brand-meta">{{order.productName || '未填写产品名'}}<text wx:if="{{order.contentTypeText}}" class="meta-content-type"> · {{order.contentTypeText}}</text></view>
+    </view>
+    <view class="header-btns">
+      <view class="icon-btn edit-btn" bindtap="editOrder">✏️</view>
+      <view class="icon-btn del-btn" bindtap="deleteOrder">🗑</view>
+    </view>
+  </view>
+
+  <scroll-view scroll-y class="detail-scroll">
+    
+    <!-- 利润计算卡片 -->
+    <view class="section-card">
+      <view class="section-title">💰 利润分析</view>
+      
+      <view class="profit-grid">
+        <view class="pf-item highlight">
+          <text class="pf-label">当月报价</text>
+          <text class="pf-val big text-money">¥{{order.price}}</text>
+        </view>
+        <view class="pf-item">
+          <text class="pf-label">线上返点 {{order.onlineRebateRate||0}}%</text>
+          <text class="pf-val red">-¥{{profit.onlineRebateAmount}}</text>
+        </view>
+        <view class="pf-item">
+          <text class="pf-label">线下返点 {{order.offlineRebateRate||0}}%</text>
+          <text class="pf-val red">-¥{{order.offlineRebateDeduction}}</text>
+        </view>
+      </view>
+
+      <view class="divider"></view>
+
+      <view class="profit-result">
+        <view class="pr-row">
+          <text class="pr-label">📊 去返点利润</text>
+          <text class="pr-val strong">¥{{profit.afterRebateProfit}}</text>
+        </view>
+
+        <view class="cost-row" wx:if="{{order.potatoCost || order.laborCost}}">
+          <text class="cost-label">薯条成本</text>
+          <text class="cost-val">-¥{{order.potatoCost || 0}}</text>
+        </view>
+        <view class="cost-row" wx:if="{{order.laborCost}}">
+          <text class="cost-label">女工成本</text>
+          <text class="cost-val">-¥{{order.laborCost}}</text>
+        </view>
+
+        <view class="pr-row final">
+          <text class="pr-label">🎯 净利润（去返点&扣成本）</text>
+          <text class="pr-val strong green">¥{{profit.netProfit}} ({{profit.profitRate}}%)</text>
+        </view>
+
+        <view class="tax-row">
+          <text class="tax-label">税点预估 (1%)</text>
+          <text class="tax-val">≈ ¥{{profit.taxEstimate}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 排期时间 -->
+    <view class="section-card">
+      <view class="section-title">📅 排期时间</view>
+      <view class="time-list">
+        <view class="time-item" wx:if="{{order.scheduleDate}}">
+          <text class="time-dot active"></text><text class="time-label">预定档期</text><text class="time-value">{{order.scheduleDate}}</text>
+        </view>
+        <view class="time-item" wx:if="{{order.outlineDate}}">
+          <text class="time-dot"></text><text class="time-label">大纲时间</text><text class="time-value">{{order.outlineDate}}</text>
+        </view>
+        <view class="time-item" wx:if="{{order.draftDate}}">
+          <text class="time-dot"></text><text class="time-label">初稿时间</text><text class="time-value">{{order.draftDate}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 内容形式 & 排竞 -->
+    <view class="section-card" wx:if="{{order.contentTypeText || order.competitionText}}">
+      <view class="section-title">📋 商单信息</view>
+      <view class="info-list">
+        <view class="info-row" wx:if="{{order.contentTypeText}}">
+          <text class="info-label">内容形式</text>
+          <text class="info-val">{{order.contentTypeText}}</text>
+        </view>
+        <view class="info-row" wx:if="{{order.competitionText}}">
+          <text class="info-label">排竞管理</text>
+          <text class="info-val highlight-blue">{{order.competitionText}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 推进进度（9种状态） -->
+    <view class="section-card">
+      <view class="section-title flex-between">
+        <text>📊 推进进度</text>
+        <picker mode="selector" range="{{progressList}}" range-key="label" value="{{progressIdx}}" bindchange="onProgressChange">
+          <view class="change-status-btn">修改 ›</view>
+        </picker>
+      </view>
+      
+      <view class="progress-steps">
+        <block wx:for="{{progressList}}" wx:key="value" wx:for-item="ps" wx:if="{{ps.step >= 0}}">
+          <view class="step-item {{order.progress === ps.value ? 'active' : ''}} {{ps.step < (progressInfo.step >= 0 ? progressInfo.step : 99) ? 'done' : ''}}"
+                style="display: {{ps.step < 0 ? 'none' : 'flex'}}">
+            <view class="step-circle {{order.progress === ps.value ? 'active' : ''}}">{{ps.icon}}</view>
+            <view class="step-text-wrap">
+              <text class="step-text">{{ps.label}}</text>
+              <text class="step-line" wx:if="{{ps.step < 7 && ps.step >= 0}}"></text>
+            </view>
+          </view>
+        </block>
+        <!-- 异常单独显示 -->
+        <view class="step-item abnormal-item {{order.progress === 'abnormal' ? 'active' : ''}}" wx:if="{{order.progress === 'abnormal'}}">
+          <view class="step-circle abnormal">⚠️</view>
+          <text class="step-text">异常</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 备注 -->
+    <view class="section-card" wx:if="{{order.notes}}">
+      <view class="section-title">💬 备注</view>
+      <view class="notes-text">{{order.notes}}</view>
+    </view>
+
+    <view style="height:40rpx"></view>
+  </scroll-view>
+</view>

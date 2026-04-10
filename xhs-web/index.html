@@ -1,0 +1,2530 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>商单管家 - 小红书博主专用</title>
+<style>
+/* ========== 全局变量与基础样式 ========== */
+:root {
+  --primary: #FF2442;
+  --primary-light: #FF6B81;
+  --primary-bg: #FFF5F5;
+  --primary-border: #FFE0E4;
+  --bg: #f5f5f5;
+  --white: #fff;
+  --text-primary: #333;
+  --text-secondary: #666;
+  --text-muted: #999;
+  --text-green: #52c41a;
+  --text-orange: #FA8C16;
+  --text-yellow: #FAAD14;
+  --text-blue: #1890FF;
+  --text-red: #FF4D4F;
+  --border: #f0f0f0;
+  --shadow: 0 2px 12px rgba(0,0,0,.04);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,.03);
+  --radius: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html{font-size:16px;background:var(--bg);}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;color:var(--text-primary);font-size:14px;line-height:1.5;min-height:100vh;overflow-x:hidden;}
+input,textarea,select,button{font-family:inherit;font-size:inherit;outline:none;border:none;background:none;}
+a{text-decoration:none;color:inherit;}
+
+/* ===== 应用容器 ===== */
+#app{max-width:720px;margin:0 auto;background:var(--bg);min-height:100vh;position:relative;padding-bottom:60px;}
+.page{display:none;animation:fadeIn .25s ease;}
+.page.active{display:block;}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+/* ===== 头部导航栏 ===== */
+.nav-bar{background:linear-gradient(135deg,var(--primary),var(--primary-light));padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(255,36,66,.15);}
+.nav-bar .nav-title{color:#fff;font-size:19px;font-weight:700;letter-spacing:.5px;}
+.nav-bar .nav-sub{color:rgba(255,255,255,.7);font-size:12px;margin-top:1px;}
+.nav-bar .nav-left{display:flex;align-items:center;gap:12px;}
+.nav-back{width:32px;height:32px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;cursor:pointer;border-radius:50%;background:rgba(255,255,255,.15);}
+.nav-right{display:flex;align-items:center;gap:10px;}
+.nav-add-btn{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px;font-weight:300;cursor:pointer;}
+
+/* ===== 底部TabBar ===== */
+.tab-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);max-width:720px;width:100%;background:#fff;display:flex;border-top:1px solid var(--border);z-index:100;padding-bottom:env(safe-area-inset-bottom,0);}
+.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 0 6px;cursor:pointer;transition:all .2s;color:var(--text-muted);position:relative;}
+.tab-item .tab-icon{font-size:22px;line-height:1;}
+.tab-item .tab-text{font-size:10px;margin-top:2px;font-weight:500;}
+.tab-item.active{color:var(--primary);}
+.tab-item.active::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:28px;height:3px;background:var(--primary);border-radius:0 0 3px 3px;}
+
+/* ===== 卡片通用 ===== */
+.card{margin:14px;padding:18px;background:var(--white);border-radius:var(--radius-lg);box-shadow:var(--shadow);}
+.card-title{font-size:17px;font-weight:600;color:var(--text-primary);margin-bottom:14px;}
+.section-card{margin:14px;padding:20px;background:var(--white);border-radius:var(--radius-lg);box-shadow:var(--shadow);}
+.section-title{font-size:16px;font-weight:600;color:var(--text-primary);margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid var(--primary-bg);}
+
+/* ===== 表单通用 ===== */
+.form-group{margin-bottom:16px;}
+.form-label{font-size:13px;color:var(--text-secondary);margin-bottom:8px;display:block;font-weight:500;}
+.form-label.required::before{content:'* ';color:var(--primary);}
+.form-input{width:100%;height:44px;background:#f8f8f8;border-radius:var(--radius);padding:0 14px;font-size:14px;color:var(--text-primary);border:1.5px solid transparent;transition:border-color .2s;}
+.form-input:focus{border-color:var(--primary);background:#fff;}
+.form-input::placeholder{color:var(--text-muted);}
+.form-textarea{width:100%;min-height:90px;background:#f8f8f8;border-radius:var(--radius);padding:12px 14px;font-size:14px;color:var(--text-primary);resize:vertical;border:1.5px solid transparent;line-height:1.6;}
+.form-textarea:focus{border-color:var(--primary);background:#fff;}
+.form-row{display:flex;gap:12px;}
+.form-row .form-group{flex:1;min-width:0;}
+
+.picker-select{height:44px;background:#f8f8f8;border-radius:var(--radius);padding:0 14px;font-size:14px;color:var(--text-primary);display:flex;align-items:center;justify-content:space-between;cursor:pointer;border:1.5px solid transparent;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%23ccc' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;background-size:12px;padding-right:30px;}
+.picker-select:focus{border-color:var(--primary);}
+
+.input-prefix-wrap{display:flex;align-items:center;background:#f8f8f8;border-radius:var(--radius);border:1.5px solid transparent;transition:border-color .2s;}
+.input-prefix-wrap:focus-within{border-color:var(--primary);background:#fff;}
+.input-prefix{padding:0 10px 0 14px;color:var(--primary);font-weight:700;font-size:16px;flex-shrink:0;}
+.input-prefix-wrap .form-input{flex:1;border:none;background:transparent;height:44px;padding-left:4px;}
+
+.input-suffix-wrap{display:flex;align-items:center;background:#f8f8f8;border-radius:var(--radius);border:1.5px solid transparent;}
+.input-suffix-wrap:focus-within{border-color:var(--primary);background:#fff;}
+.input-suffix{padding:0 14px;color:var(--text-muted);font-size:14px;flex-shrink:0;}
+.input-suffix-wrap .form-input{flex:1;border:none;background:transparent;height:44px;padding-right:4px;}
+
+/* 按钮 */
+.btn-primary{width:100%;height:48px;border-radius:24px;background:linear-gradient(135deg,var(--primary),var(--primary-light));color:#fff;font-size:16px;font-weight:600;cursor:pointer;transition:opacity .2s;text-align:center;display:flex;align-items:center;justify-content:center;}
+.btn-primary:active{opacity:.85;}
+.btn-outline{border:1.5px solid var(--primary);color:var(--primary);border-radius:24px;padding:10px 28px;font-weight:600;cursor:pointer;text-align:center;}
+.btn-danger-outline{border:1.5px solid var(--text-red);color:var(--text-red);border-radius:24px;padding:10px 28px;font-weight:600;cursor:pointer;text-align:center;}
+
+/* ===== 标签 ===== */
+.tag{display:inline-block;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:500;white-space:nowrap;}
+.tag-pending,.prog-scheduled{background:#F0F0F0;color:#666;}
+.tag-confirmed,.prog-sent{background:#E6F7FF;color:var(--text-blue);}
+.tag-shooting,.prog-content{background:#FFF7E6;color:var(--text-orange);}
+.tag-published,.prog-product{background:#F6FFED;color:var(--text-green);}
+.tag-settled,.prog-shot{background:#F9F0FF;color:#722ED1;}
+.tag-cancelled,.prog-draft{background:#FFF1F0;color:var(--text-red);}
+.prog-finalized{background:#E6F7FF;color:#096DD9;}
+.prog-published{background:#F6FFED;color:#389E0D;}
+.prog-abnormal{background:#FFFBE6;color:#D48806;}
+
+/* ===== 文本颜色工具类 ===== */
+.text-primary{color:var(--primary);}
+.text-money{color:var(--primary);font-weight:600;}
+.text-money-large{color:var(--primary);font-size:32px;font-weight:700;}
+.text-money-big{color:var(--primary);font-size:28px;font-weight:700;}
+.text-gray{color:var(--text-muted);font-size:12px;}
+.text-green{color:var(--text-green);}
+.text-blue{color:var(--text-blue);}
+.text-orange{color:var(--text-orange);}
+.text-red{color:var(--text-red);}
+.flex-between{display:flex;justify-content:space-between;align-items:center;}
+
+/* ===== 搜索栏 ===== */
+.search-bar{display:flex;padding:14px 14px 10px;background:var(--white);gap:10px;align-items:center;position:sticky;top:0;z-index:10;}
+.search-input-wrap{flex:1;display:flex;align-items:center;background:#f8f8f8;border-radius:var(--radius);height:40px;padding:0 12px;}
+.search-icon{font-size:16px;margin-right:6px;flex-shrink:0;}
+.search-input{flex:1;height:40px;font-size:13px;background:none;border:none;}
+.add-btn{white-space:nowrap;height:40px;line-height:40px;padding:0 16px;background:var(--primary);color:#fff;border-radius:var(--radius);font-size:13px;font-weight:500;cursor:pointer;}
+
+/* ===== 筛选标签 ===== */
+.filter-tabs{background:#fff;padding-bottom:10px;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.filter-tabs::-webkit-scrollbar{display:none;}
+.filter-inner{display:flex;padding:0 10px;gap:6px;}
+.filter-tab{display:inline-block;white-space:nowrap;padding:7px 16px;border-radius:20px;font-size:12px;color:var(--text-secondary);background:#f5f5f5;cursor:pointer;transition:all .2s;}
+.filter-tab.active{background:var(--primary);color:#fff;font-weight:500;}
+
+/* ===== 周期切换（统计页）===== */
+.period-tabs{display:flex;padding:14px 14px 10px;background:var(--white);gap:8px;position:sticky;top:0;z-index:10;}
+.period-tab{flex:1;text-align:center;height:38px;line-height:38px;border-radius:19px;font-size:13px;color:var(--text-secondary);background:#f5f5f5;cursor:pointer;transition:all .2s;}
+.period-tab.active{background:var(--primary);color:#fff;font-weight:600;}
+
+/* ===== 指标卡 ===== */
+.metrics-grid{display:flex;flex-wrap:wrap;padding:10px;gap:10px;}
+.metric-card{width:calc(50% - 5px);padding:16px;background:var(--white);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);text-align:center;}
+.metric-card.profit-main{width:100%;background:linear-gradient(135deg,var(--primary-bg),#FFF);border-left:6px solid var(--primary);}
+.metric-card.warn{border-left:6px solid var(--text-yellow);}
+.metric-label{display:block;font-size:11px;color:var(--text-muted);margin-bottom:6px;}
+.metric-val{display:block;font-size:22px;font-weight:700;color:var(--text-primary);}
+.metric-val.text-money-big{color:var(--primary);font-size:28px;font-weight:700;}
+.metric-val.tax{color:var(--text-yellow);font-size:17px;}
+.metric-val.orange{color:var(--text-orange);font-size:20px;}
+.metric-val.warn-num{color:#D48806;font-size:22px;}
+.metric-sub{display:block;font-size:11px;color:#bbb;margin-top:4px;}
+
+/* ===== 利润预览 ===== */
+.profit-preview{margin-top:12px;padding:14px;background:#FFF9F5;border-radius:var(--radius);border-left:5px solid var(--primary);}
+.preview-title{font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:10px;}
+.preview-grid{display:flex;gap:18px;}
+.pv-item{flex:1;text-align:center;}
+.pv-label{display:block;font-size:11px;color:var(--text-muted);margin-bottom:2px;}
+.pv-val{display:block;font-size:20px;color:var(--primary);font-weight:700;}
+.pv-val.small{font-size:14px;}
+
+/* ===== 空状态 ===== */
+.empty-state{display:flex;flex-direction:column;align-items:center;padding:70px 20px;}
+.empty-icon{font-size:52px;}
+.empty-text{font-size:18px;color:var(--text-secondary);margin-top:12px;}
+.empty-sub{font-size:13px;color:#bbb;margin-top:6px;}
+
+/* ===== 首页特有 ===== */
+.quick-entry-card{padding-bottom:6px;}
+.two-col > *,.three-col > *,.four-col > *{flex:1;min-width:0;}
+.col-xs,.col-sm{flex:1!important;}
+.btn-col{display:flex;align-items:flex-end;}
+.quick-submit-btn{height:44px;line-height:44px;text-align:center;background:var(--primary);color:#fff;border-radius:var(--radius);font-size:13px;font-weight:600;cursor:pointer;width:100%;}
+
+/* 利润概览 */
+.profit-overview{background:linear-gradient(135deg,var(--primary-bg),#FFF);border-left:6px solid var(--primary);}
+.profit-header{display:flex;align-items:baseline;gap:12px;}
+.profit-hint{font-size:11px;}
+.profit-num{margin:12px 0 8px;}
+.profit-meta{display:flex;align-items:center;gap:6px;font-size:12px;}
+.meta-item{color:var(--text-secondary);}
+.meta-sep{color:#ddd;}
+.meta-abnormal{color:var(--text-yellow);}
+
+/* 近期排期 */
+.upcoming-list{display:flex;flex-direction:column;gap:12px;}
+.upcoming-item{padding:12px;background:#fafafa;border-radius:var(--radius);}
+.upcoming-brand{font-size:15px;font-weight:500;color:var(--text-primary);}
+.upcoming-info{font-size:12px;margin-top:4px;display:flex;align-items:center;gap:8px;}
+.days-badge{padding:2px 8px;border-radius:4px;background:#E6F7FF;color:var(--text-blue);font-size:11px;}
+.days-badge.urgent{background:#FFF1F0;color:var(--text-red);}
+
+/* 最近商单 */
+.recent-list{display:flex;flex-direction:column;gap:12px;}
+.recent-item{padding:14px 12px;background:#fafafa;border-radius:var(--radius);cursor:pointer;transition:background .15s;}
+.recent-item:hover{background:#f5f5f5;}
+.recent-top{display:flex;justify-content:space-between;align-items:center;}
+.recent-brand{font-size:15px;font-weight:500;color:var(--text-primary);}
+.recent-price{font-size:15px;color:var(--primary);font-weight:600;}
+.recent-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:8px;}
+.recent-profit{font-size:12px;color:var(--text-secondary);margin-top:6px;}
+.recent-rebate-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;}
+.rebate-tag{font-size:10px;padding:2px 8px;border-radius:4px;white-space:nowrap;font-weight:500;}
+.rebate-tag.online-rb{background:#E6F7FF;color:#1890FF;}
+.rebate-tag.offline-rb{background:#F9F0FF;color:#722ED1;}
+.rebate-tag.cost-rb{background:#FFFBE6;color:#D48806;}
+.card-more{font-size:12px;cursor:pointer;color:var(--text-muted)}
+
+/* ===== 商单列表卡片 ===== */
+.order-list{padding:0 14px;}
+.order-card{margin-bottom:10px;background:var(--white);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden;}
+.order-card-inner{padding:14px;cursor:pointer;}
+.order-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.brand-name{font-size:16px;font-weight:600;color:var(--text-primary);}
+.order-body{margin-bottom:8px;}
+.order-info-row{display:flex;align-items:center;gap:6px;margin-bottom:3px;font-size:12.5px;color:#555;}
+.info-icon{font-size:13px;flex-shrink:0;}
+.info-tag{color:var(--text-blue);font-size:11px;}
+.notes-text{color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:260px;display:inline-block;}
+.order-footer{display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid #f5f5f5;}
+.price-label{font-size:11px;color:var(--text-muted);margin-right:4px;}
+.price-num{font-size:16px;font-weight:600;}
+.order-profit{color:var(--text-green);font-weight:500;font-size:12px;}
+
+/* ===== 详情页头部 ===== */
+.brand-header{display:flex;align-items:center;gap:14px;padding:18px 16px;background:linear-gradient(135deg,var(--primary),var(--primary-light));}
+.brand-logo{width:48px;height:48px;line-height:48px;border-radius:50%;background:rgba(255,255,255,.25);color:#fff;font-size:21px;font-weight:700;text-align:center;}
+.brand-info{flex:1;}
+.brand-name-detail{font-size:19px;font-weight:600;color:#fff;}
+.brand-meta-detail{font-size:13px;color:rgba(255,255,255,.7);margin-top:2px;}
+.meta-content-type{color:rgba(255,255,255,.9);}
+.header-btns{display:flex;gap:8px;}
+.icon-btn{width:36px;height:36px;line-height:34px;text-align:center;border-radius:50%;background:rgba(255,255,255,.2);font-size:16px;cursor:pointer;}
+
+/* 利润分析 */
+.profit-grid{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:6px;}
+.pf-item{flex:1;min-width:38%;padding:12px;background:#FAFAFA;border-radius:var(--radius);text-align:center;}
+.pf-item.highlight{background:#FFF9F5;border-left:5px solid var(--primary);}
+.pf-label{display:block;font-size:11px;color:var(--text-muted);margin-bottom:4px;}
+.pf-val{display:block;font-size:16px;color:var(--text-primary);font-weight:500;}
+.pf-val.big{font-size:22px;}
+.pf-val.red{color:var(--text-red);}
+.divider{height:1px;background:#F0F0F0;margin:12px 0;}
+.profit-result{}
+.pr-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;}
+.pr-row.final{padding-top:14px;border-top:2px solid #FFE4E1;}
+.pr-label{font-size:14px;color:var(--text-primary);font-weight:500;}
+.pr-val.strong{font-size:20px;font-weight:700;}
+.pr-val.green{color:var(--text-green);}
+.cost-row{display:flex;justify-content:space-between;padding:8px 0 8px 24px;}
+.cost-label{font-size:13px;color:#888;}
+.cost-val{font-size:13px;color:var(--text-red);}
+.tax-row{display:flex;justify-content:space-between;padding:10px 0 0;margin-top:6px;border-top:1px dashed #EEE;}
+.tax-label{font-size:12px;color:#bbb;}
+.tax-val{font-size:13px;color:var(--text-yellow);}
+
+/* 时间线 */
+.time-list{display:flex;flex-direction:column;gap:10px;}
+.time-item{display:flex;align-items:center;gap:10px;}
+.time-dot{width:10px;height:10px;border-radius:50%;background:#DDD;}
+.time-dot.active{background:var(--primary);box-shadow:0 0 6px rgba(255,36,66,.3);}
+.time-label{font-size:13px;color:var(--text-secondary);width:80px;flex-shrink:0;}
+.time-value{font-size:15px;color:var(--text-primary);font-weight:500;}
+
+/* 进度条 */
+.progress-steps{display:flex;flex-wrap:wrap;gap:6px;padding-top:8px;}
+.step-item{display:flex;align-items:center;gap:6px;}
+.step-circle{width:36px;height:36px;line-height:34px;border-radius:50%;border:2.5px solid #E8E8E8;font-size:14px;text-align:center;background:#F8F8F8;}
+.step-circle.active{border-color:var(--primary);background:#FFF1F0;transform:scale(1.08);}
+.step-circle.abnormal{border-color:#D48806;background:#FFFBE6;}
+.step-item.done .step-circle{border-color:var(--text-green);background:#F6FFED;opacity:.7;}
+.step-text-wrap{display:flex;flex-direction:column;align-items:center;gap:1px;}
+.step-text{font-size:11px;color:var(--text-secondary);white-space:nowrap;}
+.step-item.active .step-text{color:var(--primary);font-weight:600;}
+.step-item.done .step-text{color:#AAA;}
+.step-line{width:2px;height:12px;background:#E8E8E8;}
+.abnormal-item{margin-left:auto;}
+.change-status-btn{font-size:12px;color:var(--text-blue);padding:4px 12px;background:#F0F8FF;border-radius:14px;cursor:pointer;}
+
+.notes-text-detail{font-size:14px;color:#555;line-height:1.6;white-space:pre-wrap;word-break:break-all;}
+
+.info-list{display:flex;flex-direction:column;gap:8px;}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;}
+.info-label{font-size:13px;color:#888;}
+.info-val{font-size:14px;color:var(--text-primary);font-weight:500;}
+.info-val.highlight-blue{color:var(--text-blue);}
+
+/* 提交区 */
+.submit-area{padding:20px 14px 30px;}
+
+/* ============================================================
+   日历页面 — Mobile-First 基础样式（移动端默认）
+   桌面端在 @media(≥768px) 中覆盖尺寸和分栏
+   ============================================================ */
+/* 日历页面容器 — 移动端垂直堆叠 */
+.cal-page-wrap{ display:flex; flex-direction:column; background:var(--bg); }
+/* 左侧日历区域 */
+.cal-left{ display:flex; flex-direction:column; }
+
+/* 月份导航 */
+.month-nav{display:flex;align-items:center;justify-content:center;gap:30px;padding:16px 0 12px;background:var(--white);position:sticky;top:0;z-index:10;}
+.nav-month-btn{font-size:26px;color:var(--text-secondary);padding:0 12px;cursor:pointer;}
+.month-title{font-size:18px;font-weight:600;color:var(--text-primary);}
+
+/* 星期头 — Grid 7列 */
+.week-header{
+  display:grid; grid-template-columns:repeat(7,1fr);
+  background:#FAFAFA; border-bottom:1px solid #EEE;
+}
+.week-day{text-align:center;font-size:11px;color:var(--text-muted);padding:9px 0;}
+
+/* 日历网格容器 — Grid 7列 */
+.calendar-grid{
+  display:grid; grid-template-columns:repeat(7,1fr);
+  padding:4px 2px; background:var(--white);
+}
+
+/* 日历格子 */
+.cal-cell{
+  min-height:72px;
+  display:flex; flex-direction:column;
+  align-items:flex-start; justify-content:flex-start;
+  padding:3px 2px; box-sizing:border-box;
+  border-radius:8px; border:1px solid #f0f0f0;
+  background:#fff; margin:0;
+  position:relative; cursor:pointer;
+}
+.cal-cell.empty{min-height:0!important;height:0;padding:0;border:none;margin:0;border-radius:0;}
+.cal-cell.selected{background:#FFF1F0;border-color:var(--primary-light);}
+.cal-cell.today .day-num{display:inline-block;width:26px;height:26px;line-height:26px;text-align:center;background:var(--primary);color:#fff!important;border-radius:50%;font-size:12px;font-weight:600;}
+.day-num{font-size:13px;color:var(--text-primary);flex-shrink:0;display:block;margin-bottom:2px;}
+
+/* 格子内商单信息 */
+.cal-order-info{width:100%;overflow:hidden;}
+.cal-order-item{cursor:pointer;padding:2px 3px;border-radius:4px;transition:background .15s;margin:1px 0;}
+.cal-order-item:hover,.cal-order-item.order-selected{background:#FFF1F0;}
+/* 多商单时第2条及以后的精简样式 */
+.cal-extra{border-top:1px dashed #eee;margin-top:2px!important;padding-top:2px!important;}
+.cal-extra .cal-brand{font-size:9px;}
+.cal-extra .cal-tag{font-size:8px;}
+
+/* ========== 拖拽相关样式 ========== */
+.cal-draggable{cursor:grab;transition:opacity .15s,transform .1s;}
+.cal-draggable:active{cursor:grabbing;}
+.cal-dragging{opacity:0.5;transform:scale(0.97);box-shadow:0 4px 12px rgba(255,36,66,.2)!important;border-color:var(--primary)!important;}
+.cal-drop-target{
+  background:#FFF7E6!important;
+  border:2px dashed var(--primary)!important;
+  box-shadow:inset 0 0 12px rgba(255,36,66,.12);
+  transform:scale(1.02);
+}
+
+/* 状态标签显眼颜色 — 与PROGRESS_STATUS的value对应 */
+.cal-status-scheduled{background:#F5F5F5;color:#333;border:1px solid #E0E0E0;}
+.cal-status-sent{background:#FFF3E0;color:#333;border:1px solid #FFD591;}
+.cal-status-content_confirmed{background:#E3F2FD;color:#333;border:1px solid #90CAF9;}
+.cal-status-product_arrived{background:#FCE4EC;color:#333;border:1px solid #F48FB1;}
+.cal-status-shot{background:#EDE7F6;color:#333;border:1px solid:#B39DDB;}
+.cal-status-draft{background:#E0F7FA;color:#333;border:1px solid #80DEEA;}
+.cal-status-finalized{background:#E8F5E9;color:#333;border:1px solid #A5D6A7;}
+.cal-status-published{background:#F3E5F5;color:#333;border:1px solid #CE93D8;}
+.cal-status-abnormal{background:#FFEBEE;color:#C62828;border:1px solid #EF9A9A;font-weight:600;}
+
+/* 格子内4行信息 + 里程碑 */
+/* 里程碑标注 — 右上角悬浮 */
+.cal-milestones{
+  position:absolute;top:3px;right:3px;z-index:3;
+  display:flex;flex-direction:column;align-items:flex-end;gap:2px;
+}
+.cal-ms-item{
+  display:inline-block;font-size:8px;padding:1px 5px;border-radius:6px;
+  background:linear-gradient(135deg,#FFF8E1,#FFECB3);color:#E65100;
+  line-height:15px;white-space:nowrap;max-width:100%;
+  overflow:hidden;text-overflow:ellipsis;font-weight:600;
+  box-shadow:0 1px 3px rgba(230,87,0,.15);
+}
+.cal-line1{margin-top:1px;width:100%;}
+.cal-brand{font-size:10px;color:var(--text-primary);font-weight:500;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cal-line2{margin-top:1px;width:100%;display:flex;align-items:center;}
+.cal-tag{font-size:9px;color:#333;padding:0 4px;border-radius:4px;line-height:16px;white-space:nowrap;flex-shrink:0;}
+.cal-line3,.cal-line4,.cal-line5{margin-top:1px;width:100%;}
+.cal-content{font-size:9px;color:var(--text-secondary);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cal-compete{font-size:9px;color:var(--text-blue);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cal-notes{font-size:9px;color:var(--text-muted);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.dot-wrap{display:flex;align-items:center;justify-content:center;gap:3px;margin-top:3px;}
+.order-dot{width:7px;height:7px;border-radius:50%;background:var(--primary);}
+.order-count{font-size:10px;color:var(--primary);}
+
+/* 移动端右侧详情面板 — 在日历下方流式展开 */
+.cal-right{
+  border-top:3px solid var(--primary-border);
+  background:#fff; min-height:200px;
+  max-height:60vh; overflow-y:auto;
+  padding:12px 16px;
+}
+.cal-right-empty{text-align:center;color:#ccc;font-size:13px;padding:40px 20px;line-height:1.6;}
+
+/* 当日详情 */
+.day-detail{margin:12px;background:var(--white);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow);}
+.day-detail .detail-title{display:flex;justify-content:space-between;align-items:center;padding:16px 16px 12px;font-size:16px;font-weight:600;border-bottom:1px solid #F0F0F0;}
+.add-for-date{font-size:12px;color:var(--primary);padding:5px 14px;background:#FFF1F0;border-radius:16px;cursor:pointer;}
+.day-order-list{max-height:55vh;overflow-y:auto;}
+.day-order-card{padding:14px 16px;border-bottom:1px solid #F8F8F8;cursor:pointer;}
+.doc-row1{display:flex;justify-content:space-between;align-items:center;}
+.doc-brand-product{font-size:15px;font-weight:500;color:var(--text-primary);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.doc-row2{margin-top:5px;}
+.doc-content-type{font-size:12px;color:var(--text-secondary);}
+.doc-row3{margin-top:3px;}
+.doc-competition{font-size:12px;color:var(--text-blue);}
+.doc-bottom{display:flex;gap:18px;margin-top:8px;}
+.doc-price{font-size:15px;color:var(--primary);font-weight:600;}
+.doc-profit{font-size:12px;color:var(--text-muted)}
+.adjust-bar{margin-top:10px;padding-top:8px;border-top:1px dashed #eee;text-align:right;}
+.adjust-btn{font-size:12px;color:var(--text-blue);cursor:pointer;}
+.empty-detail{text-align:center;padding:40px 14px;}
+.empty-detail .empty-text{color:#bbb;font-size:14px;}
+.add-for-date-btn{display:inline-block;margin-top:14px;padding:10px 24px;background:var(--primary);color:#fff;border-radius:24px;font-size:14px;cursor:pointer;}
+
+/* 日历商单选中态 */
+.order-selected{
+  background:var(--primary-bg)!important;
+  border-left:4px solid var(--primary);
+}
+.detail-edit-hint{text-align:center;padding:8px 0;font-size:12px;color:var(--primary);font-weight:600;}
+
+/* ===== 日历内联编辑器面板 ===== */
+.cal-editor-panel{
+  margin-top:-1px;
+  background:#fff;
+  border-top:3px solid var(--primary);
+  box-shadow:0 -2px 16px rgba(0,0,0,.06);
+  overflow:hidden;
+}
+.cal-editor-header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:14px 20px;background:linear-gradient(135deg,var(--primary),var(--primary-light));
+  color:#fff;
+}
+.cal-edit-title{font-size:15px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cal-close-btn{padding:6px 14px;background:rgba(255,255,255,.25);border-radius:8px;font-size:13px;cursor:pointer;color:#fff;white-space:nowrap;}
+.cal-editor-body{padding:18px 20px 24px;display:flex;flex-direction:column;gap:12px;max-height:60vh;overflow-y:auto;}
+.ce-row{display:flex;align-items:center;gap:8px;}
+.ce-row.two{display:flex;gap:8px;}
+.ce-row.three{display:flex;gap:5px;}
+.ce-row.four-sm{display:flex;flex-wrap:wrap;gap:5px;align-items:flex-end;}
+.ce-label{font-size:11.5px;color:var(--text-secondary);min-width:50px;flex-shrink:0;padding-bottom:2px;}
+.ce-row.two .ce-label,.ce-row.three .ce-label,.ce-row.four-sm .ce-label{min-width:auto;width:100%;margin-bottom:2px;}
+.ce-section-title{font-size:14px;font-weight:600;color:var(--text-primary);margin-top:4px;padding-bottom:8px;border-bottom:1px solid #f0f0f0;}
+/* 利润预览 */
+.ce-profit-preview{background:#FAFCFF;border-left:4px solid var(--text-blue);border-radius:8px;padding:12px 16px;margin:4px 0;}
+.pp-row{display:flex;justify-content:space-between;padding:4px 0;font-size:12.5px;color:var(--text-secondary);}
+.pp-total{border-top:1px solid #e8f0fe;padding-top:8px;margin-top:4px;}
+/* 按钮 */
+.ce-actions{display:flex;gap:12px;margin-top:8px;}
+.cal-del-btn{width:auto!important;padding:0 28px!important;height:44px;line-height:42px;border-radius:22px!important;}
+
+/* 公式说明 */
+.formula-card{background:#FAFCFF;border-left:5px solid var(--text-blue);}
+.formula-list{display:flex;flex-direction:column;gap:10px;}
+.formula-item{display:flex;flex-direction:column;gap:3px;}
+.f-name{font-size:14px;color:var(--text-blue);font-weight:600;}
+.f-formula{font-size:13px;color:#555;}
+.formula-hint{margin-top:10px;padding-top:10px;border-top:1px dashed #DDD;font-size:12px;}
+
+/* 统计明细 */
+.ol-item{padding:16px 0;border-bottom:1px solid #F5F5F5;cursor:pointer;}
+.ol-item:last-child{border-bottom:none;}
+.ol-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.ol-brand{font-size:16px;font-weight:500;color:var(--text-primary);}
+.ol-product{font-size:13px;color:var(--text-muted);font-weight:400;}
+.ol-middle{display:flex;gap:24px;align-items:center;margin-bottom:6px;}
+.ol-price{font-size:16px;color:var(--primary);font-weight:600;}
+.ol-profit.valid{color:var(--text-green);font-weight:500;font-size:13px;}
+.ol-profit.invalid{color:#CCC;font-size:13px;}
+.excluded-tag{font-size:10px;color:var(--text-yellow);}
+.ol-tags{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;}
+.ol-tag{font-size:11px;color:#888;background:#F5F5F5;padding:2px 10px;border-radius:6px;}
+.ol-tag.blue{color:var(--text-blue);background:#E6F7FF;}
+.ol-bottom{display:flex;justify-content:space-between;font-size:11px;}
+
+/* 进度分布条 */
+.prog-bar-wrap{margin-bottom:14px;}
+.prog-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+.prog-icon{font-size:15px;}
+.prog-name{font-size:12px;color:#555;min-width:110px;flex-shrink:0;}
+.prog-count{font-size:12px;color:var(--text-muted);margin-left:auto;}
+.prog-fill-bg{height:10px;background:#F0F0F0;border-radius:5px;overflow:hidden;flex:1;}
+.prog-fill{height:100%;background:linear-gradient(to right,var(--primary),var(--primary-light));border-radius:5px;transition:width .3s;}
+
+/* ===== 报价计算器 ===== */
+.calc-desc{font-size:12px;margin-bottom:2px;}
+.result-card{background:linear-gradient(135deg,#fff5f6,#fff);border-radius:var(--radius-xl);padding:24px;margin:14px;border:2px solid var(--primary-border);}
+.result-main{text-align:center;margin-bottom:18px;}
+.result-label{font-size:13px;color:var(--text-muted);margin-bottom:6px;}
+.result-price{font-size:42px;font-weight:800;line-height:1.1;color:var(--primary);}
+.result-range{font-size:12px;color:var(--text-muted);margin-top:6px;}
+.result-detail{background:#fff;border-radius:var(--radius);padding:16px 20px;margin-bottom:18px;}
+.detail-row-sm{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f8f8f8;}
+.detail-row-sm:last-child{border-bottom:none;}
+.dr-label{font-size:12px;color:var(--text-muted);}
+.dr-value{font-size:12px;color:var(--text-primary);font-weight:600;}
+.copy-quote-btn{text-align:center;background:linear-gradient(135deg,var(--primary),var(--primary-light));color:#fff;border-radius:24px;padding:16px;font-size:14px;font-weight:600;cursor:pointer;}
+
+/* 模板列表 */
+.template-list{}
+.template-item{display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid #f5f5f5;}
+.template-item:last-child{border-bottom:none;}
+.tpl-name{font-size:15px;color:var(--text-primary);font-weight:600;}
+.tpl-desc{font-size:12px;color:var(--text-muted);margin-top:2px;}
+.tpl-right{text-align:right;}
+.tpl-price{font-size:17px;font-weight:700;color:var(--primary);}
+.tpl-del{font-size:11px;color:var(--text-red);background:#fff2f0;padding:3px 12px;border-radius:6px;margin-top:4px;display:inline-block;cursor:pointer;}
+
+.tip-list{}
+.tip-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f8f8f8;}
+.tip-item:last-child{border-bottom:none;}
+.tip-icon{font-size:17px;width:26px;flex-shrink:0;}
+.tip-text{font-size:13px;color:var(--text-secondary);}
+
+.add-template-area{padding:20px 14px 0;}
+.add-tpl-btn{text-align:center;background:#fff;color:var(--primary);border:2px dashed var(--primary);border-radius:var(--radius);padding:20px;font-size:14px;font-weight:600;cursor:pointer;}
+
+/* ===== 返点管理 ===== */
+.stats-bar{background:linear-gradient(135deg,var(--primary),var(--primary-light));display:flex;padding:18px 16px;gap:0;}
+.stat-item{flex:1;text-align:center;}
+.stat-item.highlight{border-left:1px solid rgba(255,255,255,.2);border-right:1px solid rgba(255,255,255,.2);}
+.stat-val-rebate{font-size:24px;font-weight:700;color:#fff;line-height:1.2;}
+.stat-val-rebate.green{color:#a8ffc4;}
+.stat-val-rebate.orange{color:#ffe08a;}
+.stat-name{font-size:11px;color:rgba(255,255,255,.75);margin-top:5px;}
+
+.action-bar{padding:14px 16px;}
+.add-rebate-btn{background:linear-gradient(135deg,var(--primary),var(--primary-light));color:#fff;border-radius:var(--radius);text-align:center;padding:18px;font-size:14px;font-weight:600;cursor:pointer;}
+
+.rebate-list{padding:0 0 30px;}
+.rebate-item{background:var(--white);border-radius:var(--radius-lg);padding:18px 20px;margin:0 14px 12px;box-shadow:var(--shadow);}
+.rebate-main{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.rebate-brand{font-size:17px;font-weight:700;color:var(--text-primary);}
+.rebate-amount{font-size:20px;font-weight:700;color:var(--primary);}
+.rebate-info{font-size:12px;color:var(--text-muted);margin-bottom:12px;}
+.rebate-footer{display:flex;align-items:center;justify-content:space-between;}
+.rebate-actions{display:flex;gap:8px;}
+.action-btn-sm{padding:5px 14px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;}
+.green-btn{background:#f6ffed;color:var(--text-green);}
+.edit-btn-sm{background:#e6f7ff;color:var(--text-blue);}
+.del-btn-sm{background:#fff2f0;color:var(--text-red);}
+.rebate-notes{font-size:12px;color:var(--text-muted);margin-top:10px;padding-top:10px;border-top:1px solid #f5f5f5;}
+
+/* ===== 品牌库 ===== */
+.export-bar{padding:0 14px 12px;}
+.export-btn{text-align:center;padding:14px;background:#FFF7E6;color:var(--text-orange);border-radius:var(--radius);font-size:13px;font-weight:500;cursor:pointer;}
+
+.brand-list-page{padding:0 14px;}
+.brand-card{display:flex;align-items:center;gap:14px;padding:16px 14px;background:var(--white);border-radius:var(--radius-lg);margin-bottom:10px;box-shadow:var(--shadow-sm);cursor:pointer;}
+.brand-avatar{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-light));display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.avatar-text{font-size:18px;color:#fff;font-weight:700;}
+.brand-info-page{flex:1;min-width:0;}
+.brand-name-row{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+.brand-name-page{font-size:16px;font-weight:600;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px;}
+.brand-industry{font-size:11px;color:var(--text-muted);background:#F5F5F5;padding:2px 8px;border-radius:6px;white-space:nowrap;}
+.contact-info-b{display:flex;align-items:center;gap:6px;margin-bottom:3px;font-size:12px;}
+.contact-icon-b{font-size:13px;}
+.contact-name-b{color:#555;}
+.contact-phone-b{color:#888;}
+.brand-stats-b{display:flex;align-items:center;gap:6px;margin-top:6px;}
+.stat-text-b{font-size:11px;color:var(--text-secondary);}
+.stat-sep-b{color:#DDD;}
+.brand-action{flex-shrink:0;}
+.more-icon-b{font-size:22px;color:#CCC;}
+
+/* 品牌详情 */
+.input-with-copy{display:flex;align-items:center;gap:10px;}
+.input-with-copy .form-input{flex:1;}
+.copy-inline{background:#f5f5f5;color:var(--text-secondary);border-radius:6px;padding:0 14px;height:44px;line-height:44px;font-size:12px;flex-shrink:0;cursor:pointer;}
+.call-inline{background:#e6f7ff;color:var(--text-blue);border-radius:6px;padding:0 14px;height:44px;line-height:44px;font-size:12px;flex-shrink:0;cursor:pointer;font-weight:600;}
+
+.order-item-b{padding:12px 0;border-bottom:1px solid #f5f5f5;cursor:pointer;}
+.order-item-b:last-child{border-bottom:none;}
+.order-row-b{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.order-content-b{font-size:14px;color:var(--text-primary);font-weight:600;}
+.order-price-b{font-size:14px;font-weight:700;}
+.order-meta-b{font-size:11px;}
+.action-area-b{padding:20px 14px 40px;}
+.btn-save-b{width:100%;height:48px;line-height:48px;background:linear-gradient(135deg,var(--primary),var(--primary-light));color:#fff;border-radius:24px;font-size:16px;font-weight:700;border:none;cursor:pointer;margin-bottom:14px;}
+.btn-delete-b{width:100%;height:44px;line-height:44px;background:#fff;color:var(--text-red);border:2px solid var(--text-red);border-radius:22px;font-size:14px;font-weight:600;cursor:pointer;}
+
+/* ===== 弹窗 ===== */
+.modal-mask{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:flex-end;justify-content:center;animation:fadeIn .2s ease;}
+.modal-panel{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:720px;max-height:85vh;overflow-y:auto;padding:24px 20px 34px;z-index:201;animation:slideUp .3s ease;}
+@keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.modal-title-b{font-size:18px;font-weight:700;color:var(--text-primary);}
+.modal-close-b{font-size:24px;color:var(--text-muted);cursor:pointer;}
+.modal-btns{display:flex;gap:14px;margin-top:24px;}
+.modal-btn{flex:1;height:46px;border-radius:23px;text-align:center;line-height:46px;font-size:14px;font-weight:600;cursor:pointer;}
+.modal-btn.cancel{background:#f5f5f5;color:var(--text-secondary);}
+.modal-btn.confirm{background:linear-gradient(135deg,var(--primary),var(--primary-light));color:#fff;}
+
+.pick-btn-inline{white-space:nowrap;padding:5px 14px;background:var(--primary);color:#fff;border-radius:8px;font-size:12px;cursor:pointer;}
+.input-with-picker-inline{display:flex;gap:10px;align-items:center;}
+.input-with-picker-inline .form-input{flex:1;}
+
+/* ===== Toast ===== */
+.toast-container{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;display:flex;flex-direction:column;align-items:center;pointer-events:none;}
+.toast-msg{background:rgba(0,0,0,.75);color:#fff;padding:12px 24px;border-radius:10px;font-size:14px;margin-bottom:6px;animation:toastIn .3s ease;pointer-events:auto;max-width:280px;text-align:center;}
+@keyframes toastIn{from{opacity:0;transform:translateY(-10px);}to{opacity:1;transform:translateY(0);}}
+
+/* ===== Confirm Dialog ===== */
+.confirm-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:300;display:flex;align-items:center;justify-content:center;animation:fadeIn .2s ease;}
+.confirm-box{background:#fff;border-radius:16px;padding:24px;width:280px;max-width:80vw;text-align:center;}
+.confirm-title{font-size:17px;font-weight:600;margin-bottom:10px;}
+.confirm-content{font-size:14px;color:var(--text-secondary);margin-bottom:20px;line-height:1.5;}
+.confirm-buttons{display:flex;gap:12px;}
+.confirm-buttons button{flex:1;height:40px;border-radius:20px;font-size:14px;font-weight:500;cursor:pointer;}
+.confirm-btn-cancel{background:#f5f5f5;color:var(--text-secondary);}
+.confirm-btn-ok{background:var(--primary);color:#fff;}
+
+/* ===== 响应式适配（移动端） ===== */
+@media(min-width:480px){
+  #app{box-shadow:0 0 30px rgba(0,0,0,.08);}
+}
+
+/* ============================================================
+   桌面端满屏布局 — ≥ 768px 时激活侧边栏+横屏日历
+   ============================================================ */
+@media(min-width:768px){
+  html{font-size:15px;background:#f0f2f5;}
+  body{background:#f0f2f5;overflow-x:auto;}
+
+  /* === 应用容器：顶部导航 + 下方内容 === */
+  #app{
+    max-width:none;
+    display:flex;
+    flex-direction:column;
+    min-height:100vh;
+    padding-bottom:0;
+    background:#f0f2f5;
+    box-shadow:none;
+    border-radius:0;
+  }
+
+  /* === 顶部横向导航栏（桌面端）=== */
+  .tab-bar{
+    position:static!important;
+    left:auto!important;
+    transform:none!important;
+    display:flex!important;
+    flex-direction:row;
+    width:100%;
+    max-width:none!important;          /* 覆盖移动端的720px限制 */
+    min-height:auto;
+    border-top:none;
+    border-bottom:1px solid #e8e8e8;
+    padding:0 32px;
+    gap:4px;
+    background:#fff;
+    border-radius:0;
+    z-index:101;
+    justify-content:flex-start;
+    height:auto;
+    min-height:50px;
+    align-items:center;
+    box-sizing:border-box;
+    flex-shrink:0;
+    overflow:visible;
+  }
+  .tab-item{
+    display:flex!important;
+    flex-direction:row;
+    flex:none!important;             /* 覆盖移动端的 flex:1，不再均分宽度 */
+    padding:10px 24px;
+    gap:6px;
+    height:auto;
+    border-radius:0;
+    border-bottom:3px solid transparent;
+    white-space:nowrap;
+  }
+  .tab-item::before{display:none!important;}
+  .tab-item.active{
+    color:var(--primary);
+    background:none;
+    border-left:none;
+    border-bottom-color:var(--primary);
+  }
+  .tab-item .tab-icon{font-size:18px;}
+  .tab-item .tab-text{font-size:13px;font-weight:600;}
+
+  /* === 主内容区 === */
+  .main-area{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    min-height:100vh;
+    overflow:hidden;
+  }
+  #pageContent{
+    flex:1;
+    overflow-y:auto;
+    overflow-x:auto;
+  }
+  /* 日历页面：让 .page 容器支持横向分栏 */
+  #pageContent:has(.cal-page-wrap){
+    overflow:hidden;
+  }
+  #pageContent .cal-page-wrap{
+    height:100%;
+  }
+
+  /* 导航栏 */
+  .nav-bar{
+    position:sticky;top:0;z-index:100;
+    border-radius:0;padding:16px 32px;
+  }
+  .nav-bar .nav-title{font-size:21px;}
+
+  /* === 卡片 & 容器 — 更宽更舒适 === */
+  .card,.section-card{
+    margin:18px 32px;
+    padding:22px 28px;
+  }
+  .card-title{font-size:19px;margin-bottom:16px;}
+  .section-title{font-size:17px;}
+
+  /* 表单更大 */
+  .form-input{height:48px;font-size:15px;border-radius:10px;}
+  .form-textarea{min-height:100px;font-size:15px;border-radius:10px;}
+  .picker-select{height:48px;font-size:15px;border-radius:10px;}
+  .form-label{font-size:14px;margin-bottom:9px;}
+  .btn-primary{height:52px;font-size:17px;border-radius:26px;}
+
+  /* 搜索栏 */
+  .search-bar{padding:18px 32px 14px;}
+  .search-input-wrap{height:44px;border-radius:10px;}
+  .add-btn{height:44px;line-height:44px;border-radius:10px;font-size:14px;}
+
+  /* 首页快速录入 — 四列更宽敞 */
+  .quick-entry-card{padding-bottom:10px;}
+  .quick-submit-btn{height:48px;font-size:14px;border-radius:10px;}
+  .text-money-large{font-size:40px;}
+
+  /* 利润概览 */
+  .profit-num{margin:16px 0 10px;}
+
+  /* 近期 / 最近列表 */
+  .upcoming-item{padding:16px 20px;border-radius:10px;}
+  .recent-item{padding:16px 20px;border-radius:10px;}
+  .recent-brand{font-size:16px;}
+
+  /* 空状态 */
+  .empty-state{padding:80px 40px;}
+  .empty-icon{font-size:60px;}
+  .empty-text{font-size:20px;}
+
+  /* === 商单列表 === */
+  .order-list{padding:0 32px;}
+  .order-card{margin-bottom:14px;}
+  .order-card-inner{padding:18px 22px;}
+  .brand-name{font-size:17px;}
+  .price-num{font-size:18px;}
+
+  /* === 详情页 === */
+  .brand-header{padding:24px 32px;border-radius:0;}
+  .brand-logo{width:56px;height:56px;line-height:56px;font-size:24px;}
+  .brand-name-detail{font-size:22px;}
+  .pf-val.big{font-size:26px;}
+  .pr-val.strong{font-size:24px;}
+
+  /* 时间线 */
+  .time-value{font-size:16px;}
+
+  /* 进度条 */
+  .step-circle{width:42px;height:42px;line-height:40px;font-size:16px;}
+
+  /* === 统计页 === */
+  .period-tabs{padding:18px 32px 14px;}
+  .period-tab{height:42px;font-size:14px;border-radius:21px;}
+  .metrics-grid{padding:14px 22px;gap:14px;}
+  .metric-card{width:calc(25% - 11px)!important;padding:20px 16px;}
+  .metric-card.profit-main{width:100%!important;}
+  .metric-val{font-size:24px;}
+  .metric-val.text-money-big{font-size:34px;}
+
+  /* 统计明细 */
+  .ol-item{padding:18px 0;}
+  .ol-brand{font-size:17px;}
+  .ol-price{font-size:18px;}
+
+  /* 进度分布条 */
+  .prog-name{min-width:130px;font-size:13px;}
+
+  /* === 报价计算器 === */
+  .result-card{margin:18px 32px;padding:30px;}
+  .result-price{font-size:52px;}
+  .result-detail{padding:20px 28px;}
+
+  /* 模板列表 */
+  .template-item{padding:20px 0;}
+  .tpl-name{font-size:16px;}
+  .tpl-price{font-size:20px;}
+
+  /* === 返点管理 === */
+  .stats-bar{padding:22px 28px;}
+  .stat-val-rebate{font-size:28px;}
+  .rebate-item{margin:0 32px 14px;padding:22px 26px;}
+  .rebate-brand{font-size:19px;}
+  .rebate-amount{font-size:23px;}
+
+  /* === 品牌库 === */
+  .export-bar{padding:0 32px 16px;}
+  .brand-list-page{padding:0 32px;}
+  .brand-card{padding:20px 18px;margin-bottom:12px;border-radius:14px;}
+  .brand-avatar{width:54px;height:54px;}
+  .avatar-text{font-size:21px;}
+  .brand-name-page{font-size:17px;max-width:none;}
+
+  /* 弹窗 — 居中弹出 */
+  .modal-mask{align-items:center;justify-content:center;}
+  .modal-panel{
+    max-width:560px;width:90%;
+    border-radius:20px;
+    max-height:85vh;
+    animation:desktopModalIn .25s ease;
+  }
+  @keyframes desktopModalIn{
+    from{opacity:0;transform:translateY(-20px) scale(0.97);}
+    to{opacity:1;transform:translateY(0) scale(1);}
+  }
+
+  /* Toast 居中更好看 */
+  .toast-msg{max-width:360px;font-size:15px;padding:14px 30px;}
+
+  /* Confirm 对话框更大 */
+  .confirm-box{width:380px;padding:28px 30px;}
+  .confirm-title{font-size:19px;}
+  .confirm-content{font-size:15px;line-height:1.6;}
+
+  /* 提交区域 */
+  .submit-area{padding:24px 32px 36px;}
+
+  /* ============================================================
+   日历视图 — 桌面端：横屏满版大格子
+   ============================================================ */
+  .month-nav{padding:20px 0 16px;}
+  .nav-month-btn{font-size:32px;}
+  .month-title{font-size:24px;}
+  .week-header{
+    display:grid;grid-template-columns:repeat(7,1fr);
+    border-bottom:2px solid #EEE;
+  }
+  .calendar-grid{
+    display:grid;grid-template-columns:repeat(7,1fr);
+    padding:6px 4px;gap:3px;
+  }
+
+  /* 日历格子 — 桌面端大格子 */
+  .cal-cell{
+    min-height:150px!important;
+    padding:6px 8px;
+    border:1px solid #f0f0f0;
+    border-radius:12px;
+    margin:0;
+    transition:all .15s ease;
+  }
+  .cal-cell:hover{border-color:var(--primary-light);box-shadow:0 2px 8px rgba(255,36,66,.1);transform:translateY(-1px);}
+  .cal-cell.empty{min-height:0!important;height:0!important;padding:0;margin:0;border:none;}
+  .cal-cell.selected{
+    background:linear-gradient(135deg,#FFF1F0,#FFF5F5);
+    border-color:var(--primary-light);
+    box-shadow:0 2px 12px rgba(255,36,66,.15);
+  }
+  .cal-cell.today .day-num{
+    width:30px;height:30px;line-height:30px;
+    font-size:13px;
+  }
+  .day-num{font-size:15px;font-weight:600;margin-bottom:4px;}
+
+  /* 格子内 5 行详细信息 — 字体加大可读 */
+  .cal-line1{margin-top:3px;}
+  .cal-brand{font-size:12px;font-weight:600;color:var(--text-primary);white-space:normal;line-height:1.3;}
+  .cal-line2{margin-top:3px;}
+  .cal-tag{font-size:10px;padding:1px 6px;line-height:18px;border-radius:4px;}
+  .cal-line3,.cal-line4,.cal-line5{margin-top:3px;}
+  .cal-content{font-size:11px;}
+  .cal-compete{font-size:11px;}
+  .cal-notes{font-size:11px;}
+
+  /* ===== 日历桌面端：左右分栏布局 ===== */
+  .cal-page-wrap{
+    display:flex;
+    flex-direction:row;
+    flex:1;
+    min-height:0;
+    gap:0;
+    position:relative;
+  }
+  /* 左侧：日历区域 */
+  .cal-left{
+    flex:1;
+    min-width:0;
+    margin-right:380px;
+    display:flex;
+    flex-direction:column;
+    overflow-y:auto;
+  }
+  /* calendar-grid 保持 display:grid 不被覆盖 */
+  .cal-left .calendar-grid{flex:1 1 auto;min-height:0;overflow-y:auto;}
+  /* 右侧：详情面板区域（固定定位，始终在视口右侧） */
+  .cal-right{
+    position:fixed;
+    top:52px;
+    right:0;
+    bottom:0;
+    width:380px;
+    background:#fff;
+    border-left:2px solid #f0f0f0;
+    z-index:50;
+    overflow-y:auto;
+    display:flex;
+    flex-direction:column;
+    box-shadow:-3px 0 15px rgba(0,0,0,.06);
+  }
+  .cal-right-empty{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    color:#ccc;
+    font-size:15px;
+    text-align:center;
+    padding:40px 20px;
+  }
+  /* 右侧详情面板 */
+  .day-detail{
+    display:flex;
+    flex-direction:column;
+    flex:1;
+    margin:0;
+    border-radius:0;
+    box-shadow:none;
+    background:#fff;
+  }
+  .day-detail .detail-title{
+    position:sticky;top:0;
+    background:#fff;
+    z-index:5;
+    padding:18px 20px 14px;
+    font-size:16px;
+    border-bottom:2px solid #f0f0f0;
+    flex-shrink:0;
+  }
+  .add-for-date{font-size:13px;padding:6px 16px;border-radius:18px;}
+  .day-order-list{max-height:none;overflow:visible;flex:1;}
+  .day-order-card{padding:18px 20px;border-bottom:1px solid #f5f5f5;cursor:pointer;transition:background .15s;}
+  .day-order-card:hover{background:#fafafa;}
+  .doc-row1{gap:12px;}
+  .doc-brand-product{font-size:16px;}
+  .doc-row2{margin-top:8px;}
+  .doc-content-type{font-size:13px;}
+  .doc-row3{margin-top:5px;}
+  .doc-competition{font-size:13px;}
+  .doc-bottom{gap:22px;margin-top:12px;}
+  .doc-price{font-size:18px;}
+  .doc-profit{font-size:13px;}
+  .adjust-btn{font-size:13px;padding:6px 16px;border-radius:16px;}
+
+  /* ===== 日历右侧内联编辑器 ===== */
+  .inline-edit-grid{
+    display:flex;flex-direction:column;gap:10px;
+    margin:14px 0;padding:14px;background:#FAFCFF;border-radius:10px;
+    border-left:4px solid var(--primary);
+  }
+  .ie-field{
+    display:flex;align-items:center;gap:8px;
+  }
+  .ie-field label{
+    font-size:12px;color:var(--text-secondary);min-width:72px;flex-shrink:0;
+  }
+  .ie-field input[type="date"]{
+    flex:1;height:36px;font-size:14px;padding:0 8px;
+    border:1px solid #e0e0e0;border-radius:6px;background:#fff;
+  }
+  .ie-field input[type="number"]{
+    width:100px;height:36px;font-size:14px;padding:0 8px;
+    border:1px solid #e0e0e0;border-radius:6px;background:#fff;text-align:right;
+  }
+  .ie-profit-row{
+    text-align:center;padding:8px 0;font-size:13px;color:#666;
+    border-top:1px dashed #e0e0e0;margin-top:4px;
+  }
+  .ie-profit-row strong{color:var(--text-green);font-size:15px;}
+  .ie-actions{
+    display:flex;gap:8px;margin-top:8px;
+  }
+  .ie-save-btn,.ie-close-btn,.ie-del-btn{
+    height:36px;font-size:13px;padding:0 20px;border-radius:18px;cursor:pointer;
+    display:inline-flex;align-items:center;justify-content:center;
+    border:1.5px solid #e0e0e0;background:#fff;color:#666;
+  }
+  .ie-save-btn{background:var(--primary);color:#fff;border-color:var(--primary);}
+  /* 状态下拉选择器 */
+  .ie-status-select{
+    font-size:13px;padding:3px 8px;border-radius:6px;
+    border:1px solid #e0e0e0;background:#fff;color:var(--primary);
+    cursor:pointer;font-weight:500;max-width:120px;
+  }
+
+  .empty-detail{padding:60px 24px;}
+  .empty-detail .empty-text{font-size:16px;}
+  .add-for-date-btn{padding:12px 28px;font-size:15px;border-radius:26px;}
+
+  /* 编辑器面板桌面端增强 */
+  .cal-editor-panel{border-top:3px solid var(--primary);box-shadow:none;flex-shrink:0;border-left:none;}
+  .cal-editor-header{padding:16px 24px;}
+  .cal-edit-title{font-size:16px;}
+  .cal-close-btn{font-size:14px;padding:8px 18px;}
+  .cal-editor-body{padding:22px 24px 28px;gap:14px;}
+  .ce-row .form-input,.ce-row .picker-select{height:42px;font-size:14px;padding:0 12px;border-radius:8px;}
+  .ce-row .form-textarea{font-size:14px;padding:10px 12px;border-radius:8px;}
+  .ce-actions button{height:48px;font-size:15px;padding:0 32px;border-radius:24px;}
+
+@media(min-width:1280px){
+  .cal-cell{min-height:180px!important;padding:8px 12px;}
+  .cal-brand{font-size:13px;}
+  .cal-right{width:440px;}
+  .cal-left{margin-right:440px;}
+  .metric-card{padding:24px 20px;}
+  .result-price{font-size:58px;}
+  .nav-bar .nav-title{font-size:23px;}
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-thumb{background:#ddd;border-radius:4px;}
+::-webkit-scrollbar-thumb:hover{background:#bbb;}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- 顶部导航栏 -->
+  <div class="tab-bar" id="tabBar">
+    <div class="tab-item active" data-page="home"><span class="tab-icon">🏠</span><span class="tab-text">首页</span></div>
+    <div class="tab-item" data-page="calendar"><span class="tab-icon">📅</span><span class="tab-text">日历</span></div>
+    <div class="tab-item" data-page="stats"><span class="tab-icon">📊</span><span class="tab-text">统计</span></div>
+    <div class="tab-item" data-page="brands"><span class="tab-icon">🏢</span><span class="tab-text">品牌</span></div>
+  </div>
+
+  <!-- 主内容区（含页面标题+页面内容） -->
+  <main class="main-area">
+  <!-- 导航栏 -->
+  <div class="nav-bar" id="navBar">
+    <div class="nav-left" id="navLeft">
+      <div class="nav-back" id="navBack" style="display:none;">‹</div>
+      <div>
+        <div class="nav-title" id="navTitle">商单管家 🌟</div>
+        <div class="nav-sub" id="navSub">小红书博主专用</div>
+      </div>
+    </div>
+    <div class="nav-right" id="navRight"></div>
+  </div>
+
+  <!-- 页面容器 -->
+  <div id="pageContent"></div>
+  </main>
+</div>
+
+<!-- Toast 容器 -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Confirm 容器 -->
+<div id="confirmContainer"></div>
+
+<!-- 弹窗容器 -->
+<div id="modalContainer"></div>
+
+<script>
+// ============================================================
+//  商单管家 Web v3.0 — 从零按小程序源码完整翻译
+// ============================================================
+
+// ===== SECTION 1: 常量与配置 =====
+const PROGRESS_STATUS = [
+  { value:'scheduled',       label:'已定档',     shortLabel:'定档', cls:'prog-scheduled',   icon:'📅', step:0 },
+  { value:'sent',            label:'已寄品',     shortLabel:'寄品', cls:'prog-sent',         icon:'📦', step:1 },
+  { value:'content_confirmed',label:'已确定内容形式',shortLabel:'内容',cls:'prog-content',icon:'📝', step:2 },
+  { value:'product_arrived', label:'产品已到',   shortLabel:'到货', cls:'prog-product',      icon:'📥', step:3 },
+  { value:'shot',            label:'产品已拍摄', shortLabel:'拍摄', cls:'prog-shot',         icon:'🎬', step:4 },
+  { value:'draft',           label:'已出初稿',   shortLabel:'初稿', cls:'prog-draft',        icon:'📄', step:5 },
+  { value:'finalized',       label:'已定稿',     shortLabel:'定稿', cls:'prog-finalized',    icon:'✅', step:6 },
+  { value:'published',       label:'已发布',     shortLabel:'发布', cls:'prog-published',    icon:'🚀', step:7 },
+  { value:'abnormal',        label:'异常',       shortLabel:'异常', cls:'prog-abnormal',     icon:'⚠️', step:-1 }
+];
+const CONTENT_TYPES = [
+  {value:'single',label:'单品单推'},
+  {value:'comparison',label:'横测'}
+];
+const COMPETITION_RANGES = [
+  {value:'7d',label:'前后 7 天'},
+  {value:'15d',label:'前后 15 天'}
+];
+const INDUSTRIES = ['美妆护肤','食品饮料','服装配饰','母婴用品','电子数码','家居家装','运动健康','宠物用品','出行旅游','教育培训','其他'];
+const QUOTE_CONTENT_TYPES = ['图文笔记','视频笔记','直播带货','测评种草'];
+const CONTENT_MULTIPLIER = {'图文笔记':1,'视频笔记':2.5,'直播带货':5,'测评种草':1.5};
+const REBATE_TYPES = ['百分比返点','固定金额','产品置换'];
+const REBATE_TYPE_VALUES = ['percent','fixed','product'];
+const REBATE_STATUSES = ['待收取','已收取','逾期未收'];
+const REBATE_STATUS_VALUES = ['pending','received','overdue'];
+
+const TAB_PAGES = ['home','calendar','stats','brands'];
+
+// ===== SECTION 2: 工具函数 =====
+const Utils = {
+  formatMoney(n){if(!n&&n!==0)return'-';const f=parseFloat(n);if(f>=10000)return(f/10000).toFixed(1)+'万';return f.toLocaleString('zh-CN');},
+  formatDate(s,f='MM-DD'){if(!s)return'';const d=new Date(s);const m={YYYY:d.getFullYear(),MM:String(d.getMonth()+1).padStart(2,'0'),DD:String(d.getDate()).padStart(2,'0'),HH:String(d.getHours()).padStart(2,'0'),mm:String(d.getMinutes()).padStart(2,'0')};return f.replace(/YYYY|MM|DD|HH|mm/g,k=>m[k]);},
+  today(){const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;},
+  currentMonth(){const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;},
+  genId(){return Date.now().toString(36)+Math.random().toString(36).substr(2,5);},
+  getProgressInfo(s){return PROGRESS_STATUS.find(x=>x.value===s)||PROGRESS_STATUS[0];},
+  getContentTypeInfo(v){return CONTENT_TYPES.find(c=>c.value===v)||CONTENT_TYPES[0];},
+  getCompetitionRangeInfo(v){return COMPETITION_RANGES.find(r=>r.value===v)||null;},
+  isValidForProfit(o){return o.progress!=='abnormal';},
+  calcProfit(order){
+    const price=parseFloat(order.price)||0;
+    const oR=parseFloat(order.onlineRebateRate)||0;
+    const offR=parseFloat(order.offlineRebateRate)||0;
+    const pC=parseFloat(order.potatoCost)||0;
+    const lC=parseFloat(order.laborCost)||0;
+    const oRA=price*(oR/100);
+    const offRA=price*(offR/100);
+    const aftR=price-oRA-offRA;
+    const nP=aftR-pC-lC;
+    const tE=Math.max(0,(aftR-pC))*0.01;
+    return{onlineRebateAmount:Math.round(oRA*100)/100,afterRebateProfit:Math.round(aftR*100)/100,netProfit:Math.round(nP*100)/100,taxEstimate:Math.round(tE*100)/100,profitRate:price>0?Math.round((nP/price)*10000)/100:0};
+  },
+  escapeHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+};
+
+// ===== SECTION 3: 存储层 =====
+const Storage = {
+  _k(k){return'xhs_v3_'+k;},
+  getOrders(){try{return JSON.parse(localStorage.getItem(this._k('orders'))||'[]')}catch(e){return[]}},
+  saveOrder(order){let os=this.getOrders();const idx=os.findIndex(o=>o.id===order.id);if(idx>=0)os[idx]=order;else os.unshift(order);localStorage.setItem(this._k('orders'),JSON.stringify(os));return order;},
+  deleteOrder(id){localStorage.setItem(this._k('orders'),JSON.stringify(this.getOrders().filter(o=>o.id!==id)))},
+  getOrderById(id){return this.getOrders().find(o=>o.id===id)},
+  getBrands(){try{return JSON.parse(localStorage.getItem(this._k('brands'))||'[]')}catch(e){return[]}},
+  saveBrand(b){let bs=this.getBrands();const idx=bs.findIndex(x=>x.id===b.id);if(idx>=0)bs[idx]=b;else bs.unshift(b);localStorage.setItem(this._k('brands'),JSON.stringify(bs));return b;},
+  deleteBrand(id){localStorage.setItem(this._k('brands'),JSON.stringify(this.getBrands().filter(b=>b.id!==id)))},
+  getBrandById(id){return this.getBrands().find(b=>b.id===id)},
+  getRebates(){try{return JSON.parse(localStorage.getItem(this._k('rebates'))||'[]')}catch(e){return[]}},
+  saveRebate(r){let rs=this.getRebates();const idx=rs.findIndex(x=>x.id===r.id);if(idx>=0)rs[idx]=r;else rs.unshift(r);localStorage.setItem(this._k('rebates'),JSON.stringify(rs));return r;},
+  deleteRebate(id){localStorage.setItem(this._k('rebates'),JSON.stringify(this.getRebates().filter(r=>r.id!==id)))},
+  getQuoteTemplates(){try{return JSON.parse(localStorage.getItem(this._k('quoteTemplates'))||'[]')||(function(){const t=[{id:Utils.genId(),name:'图文笔记',basePrice:3000,desc:'图文种草笔记'},{id:Utils.genId(),name:'视频笔记',basePrice:8000,desc:'短视频种草'},{id:Utils.genId(),name:'直播带货',basePrice:15000,desc:'直播间推广'}];localStorage.setItem('xhs_v3_quoteTemplates',JSON.stringify(t));return t})()}catch(e){return[]}},
+  saveQuoteTemplate(t){let ts=this.getQuoteTemplates();const idx=ts.findIndex(x=>x.id===t.id);if(idx>=0)ts[idx]=t;else ts.unshift(t);localStorage.setItem(this._k('quoteTemplates'),JSON.stringify(ts));return t;},
+  deleteQuoteTemplate(id){localStorage.setItem(this._k('quoteTemplates'),JSON.stringify(this.getQuoteTemplates().filter(t=>t.id!==id)))},
+  // 数据迁移：从旧版导入
+  migrateOldData(){
+    try{
+      const keys=['orders','brands','rebates','quoteTemplates'];
+      const migrated=[];
+      keys.forEach(k=>{
+        const oldData=localStorage.getItem(k);
+        if(oldData && !localStorage.getItem(this._k(k))){
+          localStorage.setItem(this._k(k),oldData);
+          migrated.push(k);
+        }
+      });
+      if(migrated.length>0) console.log('[MIGRATE] Imported:',migrated.join(', '));
+    }catch(e){}
+  }
+};
+Storage.migrateOldData();
+
+// ===== SECTION 4: 路由系统 =====
+const Router={
+  currentPage:'home',
+  pageParams:{},
+  history:[],
+  listeners:{},
+  init(){
+    window.addEventListener('hashchange',()=>this.onHashChange());
+    // Tab 点击
+    document.querySelectorAll('.tab-item').forEach(el=>{
+      el.addEventListener('click',()=>{
+        const page=el.dataset.page;
+        this.navigate(page);
+      });
+    });
+    document.getElementById('navBack').addEventListener('click',()=>this.goBack());
+    this.onHashChange();
+  },
+  navigate(page,params){
+    this.currentPage=page;
+    this.pageParams=params||{};
+    if(TAB_PAGES.includes(page)){
+      location.hash='#/'+page;
+    }else{
+      location.hash='#/'+page+(params?'?'+Object.entries(params).map(([k,v])=>k+'='+encodeURIComponent(v)).join('&'):'');
+    }
+  },
+  goBack(){
+    if(this.history.length>0){
+      const prev=this.history.pop();
+      this.currentPage=prev.page;
+      this.pageParams=prev.params||{};
+      this.render();
+    }else{
+      this.navigate('home');
+    }
+  },
+  onHashChange(){
+    const hash=location.hash.slice(2)||'/home';
+    const [path,qs]=hash.split('?');
+    const page=path.replace(/^\//,'')||'home';
+    this.currentPage=page;
+    if(qs){
+      this.pageParams={};
+      qs.split('&').forEach(p=>{const[k,v]=p.split('=');this.pageParams[k]=decodeURIComponent(v);});
+    }else{this.pageParams={};}
+    // 更新Tab状态
+    if(TAB_PAGES.includes(page)){
+      document.querySelectorAll('.tab-item').forEach(el=>el.classList.toggle('active',el.dataset.page===page));
+      document.getElementById('tabBar').style.display='';
+    }else{
+      document.querySelectorAll('.tab-item').forEach(el=>el.classList.remove('active'));
+      document.getElementById('tabBar').style.display='none';
+      // 加入历史
+      if(!this.history.length||this.history[this.history.length-1].page!==page){
+        this.history.push({page:this.currentPage,params:{...this.pageParams}});
+      }
+    }
+    this.render();
+  },
+  render(){
+    const renderer=PageRenderers[this.currentPage];
+    if(renderer){renderer();}else{document.getElementById('pageContent').innerHTML='<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-text">页面不存在</div></div>';}
+  }
+};
+
+// ===== SECTION 5: UI 组件 =====
+const UI={
+  toast(msg,duration=1500){
+    const c=document.getElementById('toastContainer');
+    const t=document.createElement('div');
+    t.className='toast-msg';t.textContent=msg;
+    c.appendChild(t);
+    setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),200);},duration);
+  },
+  confirm(title,content,onOk){
+    const c=document.getElementById('confirmContainer');
+    c.innerHTML=`<div class="confirm-overlay"><div class="confirm-box"><div class="confirm-title">${Utils.escapeHtml(title)}</div><div class="confirm-content">${Utils.escapeHtml(content)}</div><div class="confirm-buttons"><button class="confirm-btn-cancel">取消</button><button class="confirm-btn-ok">确认</button></div></div></div>`;
+    c.querySelector('.confirm-btn-cancel').onclick(()=>{c.innerHTML='';});
+    c.querySelector('.confirm-btn-ok').onclick(()=>{c.innerHTML='';onOk&&onOk();});
+  },
+  showModal(html){
+    const c=document.getElementById('modalContainer');
+    c.innerHTML=`<div class="modal-mask"><div class="modal-panel">${html}</div></div>`;
+    return c;
+  },
+  closeModal(){document.getElementById('modalContainer').innerHTML='';},
+  setNav(title,sub,showBack,rightHtml){
+    const nb=document.getElementById('navBar');
+    nb.style.display='';
+    document.getElementById('navTitle').textContent=title||'';
+    document.getElementById('navSub').textContent=sub||'';
+    document.getElementById('navSub').style.display=sub?'':'none';
+    document.getElementById('navBack').style.display=showBack?'':'';
+    document.getElementById('navRight').innerHTML=rightHtml||'';
+  },
+  hideNav(){document.getElementById('navBar').style.display='none';}
+};
+
+// ===== SECTION 5.5: 日历商单内联编辑器 =====
+function _renderCalendarOrderEditor(order){
+  const profit=Utils.calcProfit(order);
+  const ctIdx=CONTENT_TYPES.findIndex(c=>c.value===order.contentType);
+  const crIdx=COMPETITION_RANGES.findIndex(r=>r.value===order.competitionRange);
+  return `<div class="cal-editor-panel">
+    <div class="cal-editor-header"><span class="cal-edit-title">✏️ 编辑 — ${Utils.escapeHtml(order.brandName)}${order.productName?' · '+Utils.escapeHtml(order.productName):''}</span><span class="cal-close-btn" onclick="CalendarActions.toggleDetail('')">✕ 关闭</span></div>
+    <div class="cal-editor-body">
+      <div class="ce-row"><div class="ce-label">品牌</div><input class="form-input" id="ce_brandName" value="${Utils.escapeHtml(order.brandName||'')}"/></div>
+      <div class="ce-row"><div class="ce-label">产品</div><input class="form-input" id="ce_productName" value="${Utils.escapeHtml(order.productName||'')}"/></div>
+      <div class="ce-row two">
+        <div style="flex:1"><div class="ce-label">内容形式</div><select class="picker-select" id="ce_contentType">${CONTENT_TYPES.map((c,i)=>`<option value="${c.value}"${i===ctIdx?' selected':''}>${c.label}</option>`).join('')}</select></div>
+        <div style="flex:1;margin-left:10px"><div class="ce-label">排竞管理</div><select class="picker-select" id="ce_competitionRange"><option value="">不设置</option>${COMPETITION_RANGES.map(r=>`<option value="${r.value}"${r.value===order.competitionRange?' selected':''}>${r.label}</option>`).join('')}</select></div>
+      </div>
+      <div class="ce-row three">
+        <div style="flex:1"><div class="ce-label">档期</div><input type="date" class="picker-select" id="ce_scheduleDate" value="${order.scheduleDate||''}"/></div>
+        <div style="flex:1;margin-left:5px"><div class="ce-label">大纲</div><input type="date" class="picker-select" id="ce_outlineDate" value="${order.outlineDate||''}"/></div>
+        <div style="flex:1;margin-left:5px"><div class="ce-label">初稿</div><input type="date" class="picker-select" id="ce_draftDate" value="${order.draftDate||''}"/></div>
+      </div>
+      <div class="ce-section-title">💰 报价 &amp; 返点</div>
+      <div class="ce-row four-sm">
+        <div style="flex:2;min-width:120px"><div class="ce-label required">报价(¥)</div><input class="form-input" type="number" id="ce_price" value="${order.price||''}"/></div>
+        <div style="flex:1;min-width:80px"><div class="ce-label">线上返%</div><input class="form-input" type="number" id="ce_onlineRebateRate" value="${order.onlineRebateRate||''}"/></div>
+        <div style="flex:1;min-width:80px"><div class="ce-label">线下返%</div><input class="form-input" type="number" id="ce_offlineRebateRate" value="${order.offlineRebateRate||''}"/></div>
+        <div style="flex:1;min-width:70px"><div class="ce-label">薯条</div><input class="form-input" type="number" id="ce_potatoCost" value="${order.potatoCost||''}"/></div>
+        <div style="flex:1;min-width:70px"><div class="ce-label">女工</div><input class="form-input" type="number" id="ce_laborCost" value="${order.laborCost||''}"/></div>
+      </div>
+      <!-- 利润实时预览 -->
+      <div class="ce-profit-preview" id="ce_profitPreview">
+        <div class="pp-row"><span>线上返点</span><span>¥${Utils.formatMoney(profit.onlineRebateAmount)}</span></div>
+        <div class="pp-row"><span>线下返点</span><span>¥${Utils.formatMoney(price*(parseFloat(order.offlineRebateRate||0)/100))}</span></div>
+        <div class="pp-row pp-total"><span>净利润</span><span class="text-money" style="font-size:18px;font-weight:700">¥${Utils.formatMoney(profit.netProfit)}</span><span style="font-size:12px;color:#999">(${profit.profitRate}%)</span></div>
+      </div>
+      <div class="ce-row"><div class="ce-label">进度状态</div><select class="picker-select" id="ce_progress">${PROGRESS_STATUS.map((s,i)=>`<option value="${s.value}"${s.value===order.progress?' selected':''}>${s.icon} ${s.label}</option>`).join('')}</select></div>
+      <div class="ce-row"><div class="ce-label">备注</div><textarea class="form-textarea" id="ce_notes">${Utils.escapeHtml(order.notes||'')}</textarea></div>
+      <div class="ce-actions">
+        <button class="btn-primary" onclick="_saveCalEditor('${order.id}')">💾 保存修改</button>
+        <button class="btn-outline cal-del-btn" onclick="_deleteFromCalEditor('${order.id}')">🗑 删除此单</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function _bindCalEditorEvents(order){
+  // 报价变化时更新利润预览
+  ['ce_price','ce_onlineRebateRate','ce_offlineRebateRate','ce_potatoCost','ce_laborCost'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.addEventListener('input',_updateCalPreview);
+  });
+}
+
+function _updateCalPreview(){
+  const price=parseFloat(document.getElementById('ce_price').value)||0;
+  const oR=parseFloat(document.getElementById('ce_onlineRebateRate').value)||0;
+  const offR=parseFloat(document.getElementById('ce_offlineRebateRate').value)||0;
+  const pC=parseFloat(document.getElementById('ce_potatoCost').value)||0;
+  const lC=parseFloat(document.getElementById('ce_laborCost').value)||0;
+  const oRA=price*oR/100,offRA=price*offR/100,aftR=price-oRA-offRA,nP=aftR-pC-lC,tE=Math.max(0,(aftR-pC))*0.01,pRate=price>0?Math.round(nP/price*10000)/100:0;
+  const el=document.getElementById('ce_profitPreview');
+  if(el)el.innerHTML=`
+    <div class="pp-row"><span>线上返点</span><span>¥${Utils.formatMoney(Math.round(oRA*100)/100)}</span></div>
+    <div class="pp-row"><span>线下返点</span><span>¥${Utils.formatMoney(Math.round(offRA*100)/100)}</span></div>
+    <div class="pp-row pp-total"><span>净利润</span><span class="text-money" style="font-size:18px;font-weight:700">¥${Utils.formatMoney(Math.round(nP*100)/100)}</span><span style="font-size:12px;color:#999">(${pRate}%)</span></div>`;
+}
+
+function _saveCalEditor(orderId){
+  const order=Storage.getOrderById(orderId);
+  if(!order){UI.toast('商单不存在');return;}
+  order.brandName=document.getElementById('ce_brandName').value.trim();
+  order.productName=document.getElementById('ce_productName').value.trim();
+  order.contentType=document.getElementById('ce_contentType').value;
+  order.competitionRange=document.getElementById('ce_competitionRange').value;
+  order.scheduleDate=document.getElementById('ce_scheduleDate').value;
+  order.outlineDate=document.getElementById('ce_outlineDate').value;
+  order.draftDate=document.getElementById('ce_draftDate').value;
+  order.price=Number(document.getElementById('ce_price').value)||0;
+  order.onlineRebateRate=Number(document.getElementById('ce_onlineRebateRate').value)||0;
+  order.offlineRebateRate=Number(document.getElementById('ce_offlineRebateRate').value)||0;
+  order.potatoCost=Number(document.getElementById('ce_potatoCost').value)||0;
+  order.laborCost=Number(document.getElementById('ce_laborCost').value)||0;
+  order.progress=document.getElementById('ce_progress').value;
+  order.notes=document.getElementById('ce_notes').value.trim();
+  order.updateTime=Utils.today();
+  Storage.saveOrder(order);
+  UI.toast('✅ 已保存');
+  CalendarState.detailOrderId='';
+  PageRenderers.calendar();
+}
+
+function _deleteFromCalEditor(orderId){
+  UI.confirm('确认删除','确定删除该商单吗？此操作不可恢复。',()=>{
+    Storage.deleteOrder(orderId);
+    UI.toast('已删除');
+    CalendarState.detailOrderId='';
+    PageRenderers.calendar();
+  });
+}
+
+// 日历右侧快速编辑（状态+日期+薯条+女工）保存
+function _saveCalQuickEdit(orderId){
+  const order=Storage.getOrderById(orderId);
+  if(!order){UI.toast('商单不存在');return;}
+  const statusEl=document.getElementById('cfe_status_'+orderId);
+  const dateEl=document.getElementById('cfe_date_'+orderId);
+  const potatoEl=document.getElementById('cfe_potato_'+orderId);
+  const laborEl=document.getElementById('cfe_labor_'+orderId);
+  if(statusEl) order.progress=statusEl.value;
+  if(dateEl) order.scheduleDate=dateEl.value;
+  if(potatoEl) order.potatoCost=Number(potatoEl.value)||0;
+  if(laborEl) order.laborCost=Number(laborEl.value)||0;
+  order.updateTime=Utils.today();
+  Storage.saveOrder(order);
+  UI.toast('✅ 已保存');
+}
+
+// ===== SECTION 6: 页面渲染器 =====
+const PageRenderers={
+
+  // ==================== 首页 ====================
+  home(){
+    UI.setNav('商单管家 🌟','小红书博主专用',false,
+      '<div class="nav-add-btn" onclick="Router.navigate(\'orderAdd\')">+</div>');
+
+    const orders=Storage.getOrders();
+    const curMonth=Utils.currentMonth();
+
+    // 本月有效商单
+    const validOrders=orders.filter(o=>(o.createTime||'').startsWith(curMonth)&&o.progress!=='abnormal');
+    const abnormalOrders=orders.filter(o=>(o.createTime||'').startsWith(curMonth)&&o.progress==='abnormal');
+
+    let totalNet=0;
+    validOrders.forEach(o=>totalNet+=Utils.calcProfit(o).netProfit);
+
+    // 最近商单
+    const recentOrders=orders.slice(0,5).map(o=>({
+      ...o,
+      profit:Utils.calcProfit(o),
+      progressInfo:Utils.getProgressInfo(o.progress)
+    }));
+
+    // 即将到期
+    const nowTs=Date.now();
+    const upcoming=orders.filter(o=>{
+      if(!o.scheduleDate)return false;
+      if(o.progress==='published'||o.progress==='abnormal')return false;
+      const ts=new Date(o.scheduleDate).getTime();
+      return ts>nowTs && ts-nowTs<7*24*3600*1000;
+    }).sort((a,b)=>new Date(a.scheduleDate)-new Date(b.scheduleDate)).slice(0,3)
+      .map(o=>({...o,daysLeft:Math.ceil((new Date(o.scheduleDate)-nowTs)/(24*3600*1000))}));
+
+    let html=`
+    <div class="page active">
+
+    <!-- 快速录入卡片 -->
+    <div class="card quick-entry-card">
+      <div class="card-title">📝 新建商单</div>
+      <div class="form-row two-col">
+        <div class="form-group col">
+          <div class="form-label required">品牌名</div>
+          <input class="form-input" id="h_brandName" placeholder="品牌名称"/>
+        </div>
+        <div class="form-group col">
+          <div class="form-label">产品名</div>
+          <input class="form-input" id="h_productName" placeholder="产品名称"/>
+        </div>
+      </div>
+      <div class="form-row two-col">
+        <div class="form-group col">
+          <div class="form-label">内容形式</div>
+          <select class="picker-select" id="h_contentType">${CONTENT_TYPES.map((c,i)=>`<option value="${c.value}"${i===0?' selected':''}>${c.label}</option>`).join('')}</select>
+        </div>
+        <div class="form-group col">
+          <div class="form-label">排竞管理</div>
+          <select class="picker-select" id="h_competitionRange"><option value="">不设置</option>${COMPETITION_RANGES.map(r=>`<option value="${r.value}">${r.label}</option>`).join('')}</select>
+        </div>
+      </div>
+      <div class="form-row three-col">
+        <div class="form-group col-sm"><div class="form-label">预定档期</div><input type="date" class="picker-select" id="h_scheduleDate"/></div>
+        <div class="form-group col-sm"><div class="form-label">大纲时间</div><input type="date" class="picker-select" id="h_outlineDate"/></div>
+        <div class="form-group col-sm"><div class="form-label">初稿时间</div><input type="date" class="picker-select" id="h_draftDate"/></div>
+      </div>
+      <div class="form-row four-col">
+        <div class="form-group col-xs"><div class="form-label required">当月报价</div><div class="input-prefix-wrap sm"><span class="input-prefix">¥</span><input class="form-input prefix-in" type="number" id="h_price" placeholder="0"/></div></div>
+        <div class="form-group col-xs"><div class="form-label">线上返点%</div><input class="form-input" type="number" id="h_onlineRebateRate" placeholder="0"/></div>
+        <div class="form-group col-xs"><div class="form-label">线下返点%</div><input class="form-input" type="number" id="h_offlineRebateRate" placeholder="0"/></div>
+        <div class="form-group col-xs btn-col"><div class="quick-submit-btn" onclick="HomeActions.submit()">创建</div></div>
+      </div>
+    </div>
+
+    <!-- 本月利润概览 -->
+    <div class="card profit-overview">
+      <div class="profit-header">
+        <span class="card-title">💰 本月预期利润</span>
+        <span class="profit-hint text-gray">（已定档商单汇总）</span>
+      </div>
+      <div class="profit-num text-money-large">¥${Utils.formatMoney(Math.round(totalNet))}</div>
+      <div class="profit-meta">
+        <span class="meta-item">有效 ${validOrders.length} 单</span>${abnormalOrders.length>0?'<span class="meta-sep">|</span><span class="meta-item meta-abnormal">异常 ${abnormalOrders.length} 单</span>':''}
+      </div>
+    </div>`;
+
+    // 近期排期
+    if(upcoming.length>0){
+      html+=`
+    <div class="card">
+      <div class="card-title flex-between"><span>📅 近期档期</span><span class="card-more text-gray" onclick="Router.navigate(\'calendar\')">日历 &gt;</span></div>
+      <div class="upcoming-list">${upcoming.map(o=>`<div class="upcoming-item" onclick="Router.navigate(\'orderDetail\',{id:\'${o.id}'})}">
+        <div class="upcoming-brand">${Utils.escapeHtml(o.brandName)} · ${Utils.escapeHtml(o.productName||'')}</div>
+        <div class="upcoming-info text-gray">${o.scheduleDate} · ¥${o.price}<span class="days-badge ${o.daysLeft<=2?'urgent':''}">${o.daysLeft}天后</span></div>
+      </div>`).join('')}
+      </div></div>`;
+    }
+
+    // 最近商单
+    if(recentOrders.length>0){
+      html+=`
+    <div class="card">
+      <div class="card-title flex-between"><span>最近商单</span><span class="card-more text-gray" onclick="Router.navigate(\'list\')">列表 &gt;</span></div>
+      <div class="recent-list">${recentOrders.map(o=>{
+        const oR=parseFloat(o.onlineRebateRate)||0;
+        const offR=parseFloat(o.offlineRebateRate)||0;
+        const price=parseFloat(o.price)||0;
+        const oRA=Math.round(price*oR/100);
+        const offRA=Math.round(price*offR/100);
+        return `<div class="recent-item" onclick="Router.navigate('orderAdd',{id:\'${o.id}'})">
+        <div class="recent-top"><span class="recent-brand">${Utils.escapeHtml(o.brandName)}</span><span class="recent-price">¥${o.price}</span></div>
+        <div class="recent-bottom"><span class="text-gray">${Utils.escapeHtml(o.productName)||'-'}</span><span class="tag ${o.progressInfo.cls}">${o.progressInfo.label}</span></div>
+        ${o.profit.netProfit?`<div class="recent-profit">净利润：<span class="text-money">¥${Utils.formatMoney(o.profit.netProfit)}</span><span class="text-gray" style="margin-left:10px;font-size:11px">(${o.profit.profitRate}%)</span></div>`:''}
+        ${(oRA>0||offRA>0)?`<div class="recent-rebate-row">
+          ${oR>0?`<span class="rebate-tag online-rb">线上返点 ${oR}% ¥${oRA}</span>`:''}
+          ${offR>0?`<span class="rebate-tag offline-rb">线下返点 ${offR}% ¥${offRA}</span>`:''}
+          ${(o.potatoCost>0||o.laborCost>0)?`<span class="rebate-tag cost-rb">${o.potatoCost>0?'薯条¥'+o.potatoCost:''}${o.laborCost>0?' 女工¥'+o.laborCost:''}</span>`:''}
+        </div>`:''}
+      </div>`}).join('')}
+      </div></div>`;
+    }
+
+    // 空状态
+    if(recentOrders.length===0&&validOrders.length===0){
+      html+=`<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">还没有商单记录</div><div class="empty-sub">填写上方表单创建第一笔商单</div></div>`;
+    }
+    html+='<div style="height:20px"></div></div>';
+    document.getElementById('pageContent').innerHTML=html;
+
+    // 绑定快捷入口
+    HomeActions.bindEvents();
+  },
+
+  // ==================== 新建/编辑商单 ====================
+  orderAdd(){
+    const isEdit=!!Router.pageParams.id;
+    const orderId=Router.pageParams.id;
+    UI.setNav(isEdit?'编辑商单':'新建商单','',true);
+
+    const brands=Storage.getBrands();
+    let form={brandName:'',productName:'',scheduleDate:'',outlineDate:'',draftDate:'',price:'',onlineRebateRate:'',offlineRebateRate:'',potatoCost:'',laborCost:'',progress:'scheduled',contentType:'single',competitionRange:'',notes:''};
+
+    if(isEdit){
+      const order=Storage.getOrderById(orderId);
+      if(order){
+        form={brandName:order.brandName||'',productName:order.productName||'',scheduleDate:order.scheduleDate||'',outlineDate:order.outlineDate||'',draftDate:order.draftDate||'',price:String(order.price||''),onlineRebateRate:String(order.onlineRebateRate||''),offlineRebateRate:String(order.offlineRebateRate||''),potatoCost:String(order.potatoCost||''),laborCost:String(order.laborCost||''),progress:order.progress||'scheduled',contentType:order.contentType||'single',competitionRange:order.competitionRange||'',notes:order.notes||''};
+        OrderAddActions._originalOrder=order;
+        OrderAddActions._orderId=orderId;
+      }
+    }else if(Router.pageParams.date){
+      form.scheduleDate=Router.pageParams.date;
+    }
+
+    const ctIdx=CONTENT_TYPES.findIndex(c=>c.value===form.contentType);
+    const crIdx=COMPETITION_RANGES.findIndex(r=>r.value===form.competitionRange);
+    const pIdx=PROGRESS_STATUS.findIndex(s=>s.value===form.progress);
+
+    let html=`<div class="page active">
+    <div style="overflow-y:auto;max-height:calc(100vh - 120px);">
+
+    <!-- 基本信息 -->
+    <div class="section-card"><div class="section-title">📦 品牌与产品</div>
+    <div class="form-group"><div class="form-label required">品牌名称</div>`;
+    if(brands.length>0){
+      html+=`<div class="input-with-picker-inline"><input class="form-input" id="a_brandName" placeholder="品牌名" value="${Utils.escapeHtml(form.brandName)}"/><div class="pick-btn-inline" onclick="OrderAddActions.pickBrand()">从品牌库选</div></div>`;
+    }else{
+      html+=`<input class="form-input" id="a_brandName" placeholder="输入品牌名称" value="${Utils.escapeHtml(form.brandName)}"/>`;
+    }
+    html+=`</div>
+    <div class="form-group"><div class="form-label">产品名称</div><input class="form-input" id="a_productName" placeholder="推广的产品名" value="${Utils.escapeHtml(form.productName)}"/></div>
+    <div class="form-group"><div class="form-label">内容形式</div><select class="picker-select" id="a_contentType">${CONTENT_TYPES.map((c,i)=>`<option value="${c.value}"${i===ctIdx?' selected':''}>${c.label}</option>`).join('')}</select></div>
+    </div>
+
+    <!-- 排期时间 -->
+    <div class="section-card"><div class="section-title">📅 排期时间</div>
+    <div class="form-row two-col">
+      <div class="form-group col"><div class="form-label required">预定档期</div><input type="date" class="picker-select" id="a_scheduleDate" value="${form.scheduleDate}"/></div>
+      <div class="form-group col"><div class="form-label">大纲时间</div><input type="date" class="picker-select" id="a_outlineDate" value="${form.outlineDate}"/></div>
+    </div>
+    <div class="form-group"><div class="form-label">初稿时间</div><input type="date" class="picker-select" id="a_draftDate" value="${form.draftDate}"/></div>
+    </div>
+
+    <!-- 排竞管理 -->
+    <div class="section-card"><div class="section-title">🎯 排竞管理</div>
+    <select class="picker-select" id="a_competitionRange"><option value="">不设置</option>${COMPETITION_RANGES.map(r=>`<option value="${r.value}"${r.value===form.competitionRange?' selected':''}>${r.label}</option>`).join('')}</select>
+    </div>
+
+    <!-- 报价 & 返点 -->
+    <div class="section-card"><div class="section-title">💰 报价 &amp; 返点</div>
+    <div class="form-group"><div class="form-label required">当月报价（元）</div><div class="input-prefix-wrap"><span class="input-prefix">¥</span><input class="form-input input-with-prefix" type="number" id="a_price" placeholder="报价金额" value="${form.price}" oninput="OrderAddActions.calcPreview()"/></div></div>
+    <div class="form-row two-col">
+      <div class="form-group col"><div class="form-label">线上返点（%）</div><div class="input-suffix-wrap"><input class="form-input input-with-suffix" type="number" id="a_onlineRebateRate" placeholder="如：10" value="${form.onlineRebateRate}" oninput="OrderAddActions.calcPreview()"/><span class="input-suffix">%</span></div></div>
+      <div class="form-group col"><div class="form-label">线下返点（%）</div><div class="input-suffix-wrap"><input class="form-input input-with-suffix" type="number" id="a_offlineRebateRate" placeholder="如：5" value="${form.offlineRebateRate}" oninput="OrderAddActions.calcPreview()"/><span class="input-suffix">%</span></div></div>
+    </div>
+    <div class="profit-preview" id="a_profitPreview" style="display:none"><div class="preview-title">🧮 利润预览</div><div class="preview-grid"><div class="pv-item"><span class="pv-label">去返点利润</span><span class="pv-val" id="pv_afterRebate">-</span></div><div class="pv-item"><span class="pv-label">税点预估(1%)</span><span class="pv-val small" id="pv_tax">-</span></div></div></div>
+    </div>
+
+    <!-- 运营成本 -->
+    <div class="section-card"><div class="section-title">⚙️ 运营成本（可选）</div>
+    <div class="form-row two-col">
+      <div class="form-group col"><div class="form-label">薯条成本（元）</div><div class="input-prefix-wrap"><span class="input-prefix">¥</span><input class="form-input input-with-prefix" type="number" id="a_potatoCost" placeholder="0" value="${form.potatoCost}"/></div></div>
+      <div class="form-group col"><div class="form-label">女工成本（元）</div><div class="input-prefix-wrap"><span class="input-prefix">¥</span><input class="form-input input-with-prefix" type="number" id="a_laborCost" placeholder="0" value="${form.laborCost}"/></div></div>
+    </div></div>
+
+    <!-- 推进状态 -->
+    <div class="section-card"><div class="section-title">📊 推进状态</div>
+    <select class="picker-select picker-lg" id="a_progress" style="font-size:15px;font-weight:500;">${PROGRESS_STATUS.map((s,i)=>`<option value="${s.value}"${i===pIdx?' selected':''}>${s.icon} ${s.label}</option>`).join('')}</select>
+    </div>
+
+    <!-- 备注 -->
+    <div class="section-card"><div class="section-title">💬 备注</div>
+    <textarea class="form-textarea" id="a_notes" placeholder="其他备注..." maxlength="500">${Utils.escapeHtml(form.notes)}</textarea></div>
+
+    <!-- 提交 -->
+    <div class="submit-area"><button class="btn-primary" onclick="OrderAddActions.submit()">${isEdit?'保存修改':'创建商单'}</button></div>
+    </div></div>`;
+    document.getElementById('pageContent').innerHTML=html;
+    OrderAddActions.isEdit=isEdit;
+  },
+
+  // ==================== 商单详情 ====================
+  orderDetail(){
+    const orderId=Router.pageParams.id;
+    const order=Storage.getOrderById(orderId);
+    if(!order){UI.toast('商单不存在');setTimeout(()=>Router.goBack(),1000);return;}
+    UI.setNav('商单详情','',true,'<div style="display:flex;gap:8px"><div class="icon-btn" onclick="OrderDetailActions.edit()">✏️</div><div class="icon-btn" onclick="OrderDetailActions.del()">🗑</div></div>');
+
+    const profit=Utils.calcProfit(order);
+    const progressInfo=Utils.getProgressInfo(order.progress);
+    const pIdx=PROGRESS_STATUS.findIndex(s=>s.value==(order.progress||'scheduled'));
+    const offRDeduction=Math.round(((parseFloat(order.price)||0)*(parseFloat(order.offlineRebateRate)||0)/100)*10)/10;
+    const ctInfo=Utils.getContentTypeInfo(order.contentType);
+    const crInfo=Utils.getCompetitionRangeInfo(order.competitionRange);
+
+    let html=`<div class="page active">
+    <div class="brand-header"><div class="brand-logo">${(order.brandName||'').charAt(0)}</div>
+    <div class="brand-info"><div class="brand-name-detail">${Utils.escapeHtml(order.brandName)}</div><div class="brand-meta-detail">${Utils.escapeHtml(order.productName||'未填写产品名')}${ctInfo?` <span class="meta-content-type"> · ${ctInfo.label}</span>`:''}</div></div>
+    <div class="header-btns"><div class="icon-btn" onclick="OrderDetailActions.edit()">✏️</div><div class="icon-btn" onclick="OrderDetailActions.del()">🗑</div></div></div>
+
+    <div style="overflow-y:auto;max-height:calc(100vh - 120px);">
+    <!-- 利润分析 -->
+    <div class="section-card"><div class="section-title">💰 利润分析</div>
+    <div class="profit-grid">
+      <div class="pf-item highlight"><span class="pf-label">当月报价</span><span class="pf-val big text-money">¥${order.price}</span></div>
+      <div class="pf-item"><span class="pf-label">线上返点 ${order.onlineRebateRate||0}%</span><span class="pf-val red">-¥${profit.onlineRebateAmount}</span></div>
+      <div class="pf-item"><span class="pf-label">线下返点 ${order.offlineRebateRate||0}%</span><span class="pf-val red">-¥${offRDeduction}</span></div>
+    </div>
+    <div class="divider"></div>
+    <div class="profit-result">
+      <div class="pr-row"><span class="pr-label">📊 去返点利润</span><span class="pr-val strong">¥${profit.afterRebateProfit}</span></div>
+      ${order.potatoCost?`<div class="cost-row"><span class="cost-label">薯条成本</span><span class="cost-val">-¥${order.potatoCost||0}</span></div>`:''}
+      ${order.laborCost?`<div class="cost-row"><span class="cost-label">女工成本</span><span class="cost-val">-¥${order.laborCost}</span></div>`:''}
+      <div class="pr-row final"><span class="pr-label">🎯 净利润（去返点&amp;扣成本）</span><span class="pr-val strong green">¥${profit.netProfit} (${profit.profitRate}%)</span></div>
+      <div class="tax-row"><span class="tax-label">税点预估 (1%)</span><span class="tax-val">≈ ¥${profit.taxEstimate}</span></div>
+    </div></div>
+
+    <!-- 排期时间 -->
+    ${order.scheduleDate||order.outlineDate||order.draftDate?`<div class="section-card"><div class="section-title">📅 排期时间</div><div class="time-list">
+    ${order.scheduleDate?`<div class="time-item"><span class="time-dot active"></span><span class="time-label">预定档期</span><span class="time-value">${order.scheduleDate}</span></div>`:''}
+    ${order.outlineDate?`<div class="time-item"><span class="time-dot"></span><span class="time-label">大纲时间</span><span class="time-value">${order.outlineDate}</span></div>`:''}
+    ${order.draftDate?`<div class="time-item"><span class="time-dot"></span><span class="time-label">初稿时间</span><span class="time-value">${order.draftDate}</span></div>`:''}
+    </div></div>`:''}
+
+    <!-- 商单信息 -->
+    ${(ctInfo||crInfo)?`<div class="section-card"><div class="section-title">📋 商单信息</div><div class="info-list">
+    ${ctInfo?`<div class="info-row"><span class="info-label">内容形式</span><span class="info-val">${ctInfo.label}</span></div>`:''}
+    ${crInfo?`<div class="info-row"><span class="info-label">排竞管理</span><span class="info-val highlight-blue">${crInfo.label}</span></div>`:''}
+    </div></div>`:''}
+
+    <!-- 推进进度 -->
+    <div class="section-card"><div class="section-title flex-between"><span>📊 推进进度</span><span class="change-status-btn" onclick="OrderDetailActions.changeStatus()">修改 ›</span></div>
+    <div class="progress-steps">
+    ${PROGRESS_STATUS.filter(ps=>ps.step>=0).map(ps=>`<div class="step-item ${order.progress===ps.value?'active':''}${ps.step<(progressInfo.step>=0?progressInfo.step:99)?'done':''}">
+      <div class="step-circle ${order.progress===ps.value?'active':''}">${ps.icon}</div>
+      <div class="step-text-wrap"><span class="step-text">${ps.label}</span>${ps.step<7&&ps.step>=0?'<span class="step-line"></span>':''}</div>
+    </div>`).join('')}
+    ${order.progress==='abnormal'?`<div class="step-item abnormal-item active"><div class="step-circle abnormal">⚠️</div><span class="step-text">异常</span></div>`:''}
+    </div></div>
+
+    <!-- 备注 -->
+    ${order.notes?`<div class="section-card"><div class="section-title">💬 备注</div><div class="notes-text-detail">${Utils.escapeHtml(order.notes)}</div></div>`:''}
+    <div style="height:20px"></div>
+    </div></div>`;
+    document.getElementById('pageContent').innerHTML=html;
+    OrderDetailActions._orderId=orderId;
+  },
+
+  // ==================== 商单列表 ====================
+  orderList(){
+    UI.setNav('商单列表','',true,'<div class="add-btn" onclick="Router.navigate(\'orderAdd\')">+新建</div>');
+    const orders=Storage.getOrders()
+      .map(o=>({...o,profit:Utils.calcProfit(o),progressInfo:Utils.getProgressInfo(o.progress),contentTypeText:(Utils.getContentTypeInfo(o.contentType)||{}).label||'',competitionText:(Utils.getCompetitionRangeInfo(o.competitionRange)||{}).label||''}))
+      .sort((a,b)=>new Date(b.createTime||0)-new Date(a.createTime||0));
+
+    let html=`<div class="page active">
+    <div class="search-bar"><div class="search-input-wrap"><span class="search-icon">🔍</span><input class="search-input" id="list_search" placeholder="搜索品牌、产品..." oninput="OrderListActions.filter()"/></div><div class="add-btn" onclick="Router.navigate(\'orderAdd\')">+新建</div></div>
+    <div class="filter-tabs"><div class="filter-inner"><span class="filter-tab active" data-val="" onclick="OrderListActions.setFilter(this)">全部</span>${PROGRESS_STATUS.map(s=>`<span class="filter-tab" data-val="${s.value}" onclick="OrderListActions.setFilter(this)">${s.label}</span>`).join('')}</div></div>
+    <div class="order-list" id="orderListContainer">`;
+    html+=OrderListActions._renderCards(orders);
+    html+=`</div></div>`;
+    document.getElementById('pageContent').innerHTML=html;
+    OrderListActions._orders=orders;
+    OrderListActions._keyword='';
+    OrderListActions._progressFilter='';
+  },
+
+  // ==================== 日历视图 ====================
+  calendar(){
+    UI.setNav('商单日历');
+    const now=new Date();
+    let calYear=CalendarState.year||now.getFullYear();
+    let calMonth=CalendarState.month||(now.getMonth()+1);
+    CalendarState.selectedDate=CalendarState.selectedDate||'';
+
+    const firstDay=new Date(calYear,calMonth-1,1).getDay();
+    const daysInMonth=new Date(calYear,calMonth,0).getDate();
+
+    const orders=Storage.getOrders();
+    const ordersMap={};
+    // 大纲/初稿日期里程碑标注映射
+    const milestoneMap={};
+    orders.forEach(o=>{
+      try{
+      if(o.scheduleDate){
+        const d=o.scheduleDate.slice(0,10);
+        if(!ordersMap[d])ordersMap[d]=[];
+        ordersMap[d].push({...o,progressInfo:Utils.getProgressInfo(o.progress),profit:Utils.calcProfit(o),contentTypeText:(Utils.getContentTypeInfo(o.contentType)||{}).label||'',competitionText:(Utils.getCompetitionRangeInfo(o.competitionRange)||{}).label||''});
+      }
+      if(o.outlineDate){
+        const od=o.outlineDate.slice(0,10);
+        if(!milestoneMap[od])milestoneMap[od]=[];
+        var bn=(o.brandName||'').substring(0,6);
+        milestoneMap[od].push('\u{1f4dd} '+bn+'\u00b7\u5927\u7eb2');
+      }
+      if(o.draftDate){
+        const dd=o.draftDate.slice(0,10);
+        if(!milestoneMap[dd])milestoneMap[dd]=[];
+        var bn2=(o.brandName||'').substring(0,6);
+        milestoneMap[dd].push('\u{270d}\ufe0f '+bn2+'\u00b7\u521d\u7a3f');
+      }
+      }catch(e){console.error('calendar build err',e,o.id);}
+    });
+
+    let daysHtml='';
+    for(let i=0;i<firstDay;i++) daysHtml+=`<div class="cal-cell empty"></div>`;
+    for(let d=1;d<=daysInMonth;d++){
+      const ds=`${calYear}-${String(calMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const dayOs=ordersMap[ds]||[];
+      const sel=ds===CalendarState.selectedDate;
+      const tod=ds===Utils.today();
+      let cellContent='';
+
+      if(dayOs.length===1){
+        // 单商单：显示4行详细信息，可拖拽
+        const o=dayOs[0];
+        cellContent=`<div class="cal-order-item cal-draggable" draggable="true"
+          ondragstart="CalendarActions.onDragStart(event,'${o.id}')"
+          onclick="event.stopPropagation();CalendarActions.tapDay('${ds}');CalendarActions.toggleDetail('${o.id}')">
+          <div class="cal-line1"><span class="cal-brand">${Utils.escapeHtml(o.brandName)}${o.productName?` · `:''}${o.productName?Utils.escapeHtml(o.productName):''}</span></div>
+          <div class="cal-line2"><span class="cal-tag cal-status-${o.progress}">${o.progressInfo.icon} ${o.progressInfo.shortLabel||o.progressInfo.label}</span></div>
+          ${o.contentTypeText?`<div class="cal-line3"><span class="cal-content">📝 ${o.contentTypeText}</span></div>`:''}
+          ${o.competitionText?`<div class="cal-line4"><span class="cal-compete">🎯 ${o.competitionText}</span></div>`:''}
+        </div>`;
+      }else if(dayOs.length>1){
+        // 多商单：第一条完整信息（可拖拽），后续精简
+        cellContent=`<div class="cal-order-info" onclick="event.stopPropagation();CalendarActions.tapDay('${ds}')">`;
+        dayOs.forEach((o,idx)=>{
+          if(idx===0){
+            cellContent+=`<div class="cal-order-item cal-draggable" draggable="true"
+              ondragstart="CalendarActions.onDragStart(event,'${o.id}')"
+              onclick="event.stopPropagation();CalendarActions.tapDay('${ds}');CalendarActions.toggleDetail('${o.id}')">
+              <div class="cal-line1"><span class="cal-brand">${Utils.escapeHtml(o.brandName)}${o.productName?` · `:''}${o.productName?Utils.escapeHtml(o.productName):''}</span></div>
+              <div class="cal-line2"><span class="cal-tag cal-status-${o.progress}">${o.progressInfo.icon} ${o.progressInfo.shortLabel||o.progressInfo.label}</span></div>
+              ${o.contentTypeText?`<div class="cal-line3"><span class="cal-content">📝 ${o.contentTypeText}</span></div>`:''}
+              ${o.competitionText?`<div class="cal-line4"><span class="cal-compete">🎯 ${o.competitionText}</span></div>`:''}
+            </div>`;
+          }else{
+            cellContent+=`<div class="cal-order-item cal-draggable cal-extra" draggable="true"
+              ondragstart="CalendarActions.onDragStart(event,'${o.id}')"
+              onclick="event.stopPropagation();CalendarActions.tapDay('${ds}');CalendarActions.toggleDetail('${o.id}')">
+              <div><span class="cal-brand">${Utils.escapeHtml(o.brandName)}${o.productName?` · `:''}${o.productName?Utils.escapeHtml(o.productName):''}</span> <span class="cal-tag cal-status-${o.progress}">${o.progressInfo.icon} ${o.progressInfo.shortLabel||o.progressInfo.label}</span></div>
+            </div>`;
+          }
+        });
+        cellContent+=`</div>`;
+      }
+
+      daysHtml+=`<div class="cal-cell ${sel?'selected':''}${tod?' today':''}"
+        onclick="CalendarActions.tapDay('${ds}')"
+        ondragover="CalendarActions.onDragOver(event)"
+        ondrop="CalendarActions.onDrop(event,'${ds}')"
+        ondragenter="CalendarActions.onDragEnter(event,this)"
+        ondragleave="CalendarActions.onDragLeave(event,this)">
+        <span class="day-num">${d}</span>${cellContent}
+        ${(()=>{
+          const ms=milestoneMap[ds];
+          if(ms&&ms.length>0){
+            return `<div class="cal-milestones">${ms.map(m=>`<span class="cal-ms-item">${m}</span>`).join('')}</div>`;
+          }
+          return '';
+        })()}
+      </div>`;
+    }
+
+    // 当日详情
+    let detailHtml='';
+    const dayOrders=ordersMap[CalendarState.selectedDate]||[];
+    const selOrder=CalendarState.detailOrderId?dayOrders.find(o=>o.id===CalendarState.detailOrderId):null;
+    if(dayOrders.length>0){
+      detailHtml=`<div class="day-detail"><div class="detail-title"><span>${CalendarState.selectedDate} 商单排期（${dayOrders.length}个）</span><div class="add-for-date" onclick="Router.navigate('orderAdd',{date:\'${CalendarState.selectedDate}'})">+添加</div></div><div class="day-order-list">${dayOrders.map(o=>{
+        const isSel=o.id===CalendarState.detailOrderId;
+        if(isSel){
+          // 选中商单 → 直接内联编辑模式（状态+日期+薯条+女工+保存）
+          return `<div class="day-order-card order-selected">
+          <div class="doc-row1"><span class="doc-brand-product">${Utils.escapeHtml(o.brandName)}${o.productName?` · ${Utils.escapeHtml(o.productName)}`:''}</span><select class="ie-status-select" id="cfe_status_${o.id}" onchange="_saveCalQuickEdit('${o.id}')">${PROGRESS_STATUS.map(s=>`<option value="${s.value}"${s.value===o.progress?' selected':''}>${s.icon} ${s.label}</option>`).join('')}</select></div>
+          ${o.contentTypeText?`<div class="doc-row2"><span class="doc-content-type">📝 ${o.contentTypeText}</span></div>`:''}
+          <div class="inline-edit-grid">
+            <div class="ie-field"><label>📅 档期日期</label><input type="date" id="cfe_date_${o.id}" value="${o.scheduleDate||''}"/></div>
+            <div class="ie-field"><label>🍟 薯条成本</label><input type="number" id="cfe_potato_${o.id}" value="${o.potatoCost||0}" placeholder="0"/></div>
+            <div class="ie-field"><label>👩 女工成本</label><input type="number" id="cfe_labor_${o.id}" value="${o.laborCost||0}" placeholder="0"/></div>
+          </div>
+          <div class="ie-profit-row" id="cfe_profit_${o.id}">
+            <span>净利：<strong>¥${Utils.formatMoney(o.profit.netProfit)}</strong> (${o.profit.profitRate}%)</span>
+          </div>
+          <div class="ie-actions">
+            <button class="btn-primary ie-save-btn" onclick="_saveCalQuickEdit('${o.id}')">💾 保存</button>
+            <button class="btn-outline ie-close-btn" onclick="CalendarActions.toggleDetail('${o.id}')">收起</button>
+            <button class="btn-outline ie-del-btn" onclick="_deleteFromCalEditor('${o.id}')">删除</button>
+          </div></div>`;
+        }
+        // 未选中的商单
+        return `<div class="day-order-card" onclick="event.stopPropagation();CalendarActions.toggleDetail('${o.id}')">
+        <div class="doc-row1"><span class="doc-brand-product">${Utils.escapeHtml(o.brandName)}${o.productName?` · ${Utils.escapeHtml(o.productName)}`:''}</span><span class="tag ${o.progressInfo.cls}">${o.progressInfo.label}</span></div>
+        ${o.contentTypeText?`<div class="doc-row2"><span class="doc-content-type">📝 ${o.contentTypeText}</span></div>`:''}
+        ${o.competitionText?`<div class="doc-row3"><span class="doc-competition">🎯 排竞 ${o.competitionText}</span></div>`:''}
+        <div class="doc-bottom"><span class="doc-price">¥${o.price}</span><span class="doc-profit">净利 ¥${Utils.formatMoney(o.profit.netProfit)} (${o.profit.profitRate}%)</span></div>
+        <div class="adjust-bar"><span class="adjust-btn">点击编辑日期 &amp; 成本</span></div>
+      </div>`}).join('')}</div>`;
+    }else if(CalendarState.selectedDate){
+      detailHtml=`<div class="day-detail empty-detail"><div class="empty-text">当天无商单安排</div><div class="add-for-date-btn" onclick="Router.navigate('orderAdd',{date:\'${CalendarState.selectedDate}'})">+ 添加商单到此日期</div></div>`;
+    }
+
+    let html=`<div class="page active cal-page-wrap"><div class="cal-left">
+    <div class="month-nav">
+      <span class="nav-month-btn" onclick="CalendarActions.prev()">‹</span>
+      <span class="month-title">${calYear}年${calMonth}月</span>
+      <span class="nav-month-btn" onclick="CalendarActions.next()">›</span>
+    </div>
+    <div class="week-header">${['日','一','二','三','四','五','六'].map(d=>`<span class="week-day">${d}</span>`).join('')}</div>
+    <div class="calendar-grid">${daysHtml}</div></div>
+    <div class="cal-right">${detailHtml||'<div class="cal-right-empty"><span>📅 点击左侧日期或商单查看详情</span><br><span style="font-size:12px;color:#bbb;margin-top:6px;display:inline-block">再次点击同一商单可关闭</span></div>'}</div></div>`;
+    document.getElementById('pageContent').innerHTML=html;
+    CalendarState._year=calYear;CalendarState._month=calMonth;CalendarState._ordersMap=ordersMap;
+    if(selOrder)_bindCalEditorEvents(selOrder);
+    // 快速编辑字段：实时利润预览
+    if(selOrder){
+      const oid=selOrder.id;
+      ['cfe_potato_'+oid,'cfe_labor_'+oid].forEach(id=>{
+        const el=document.getElementById(id);
+        if(el)el.addEventListener('input',()=>{
+          const order=Storage.getOrderById(oid);
+          if(!order)return;
+          const p=parseFloat(order.price)||0;
+          const pc=parseFloat(document.getElementById('cfe_potato_'+oid).value)||0;
+          const lc=parseFloat(document.getElementById('cfe_labor_'+oid).value)||0;
+          const oR=p*(parseFloat(order.onlineRebateRate)||0)/100;
+          const offR=p*(parseFloat(order.offlineRebateRate)||0)/100;
+          const np=Math.round((p-oR-offR-pc-lc)*100)/100;
+          const pr=p>0?Math.round(np/p*10000)/100:0;
+          const pe=document.getElementById('cfe_profit_'+oid);
+          if(pe)pe.innerHTML=`<span>净利：<strong style="color:var(--text-green);font-size:15px">¥${Utils.formatMoney(np)}</strong> (${pr}%)</span>`;
+        });
+      });
+    }
+  },
+
+  // ==================== 数据统计 ====================
+  stats(){
+    UI.setNav('数据统计');
+    StatsActions.period=StatsActions.period||'month';
+    StatsActions.load();
+  },
+
+  // ==================== 报价计算器 ====================
+  quote(){
+    UI.setNav('报价计算器','',true);
+    QuoteActions.load();
+  },
+
+  // ==================== 返点管理 ====================
+  rebate(){
+    UI.setNav('返点管理','',true,'<div class="add-btn" onclick="RebateActions.showAddForm()">+ 记录返点</div>');
+    RebateActions.load();
+  },
+
+  // ==================== 品牌列表 ====================
+  brands(){
+    UI.setNav('品牌库','',true,'<div class="add-btn" onclick="Router.navigate(\'brandDetail\')">+添加</div>');
+    BrandListActions.load();
+  },
+
+  // ==================== 品牌详情 ====================
+  brandDetail(){
+    const isEdit=!!Router.pageParams.id;
+    const bid=Router.pageParams.id;
+    UI.setNav(isEdit?'编辑品牌':'添加品牌','',true);
+
+    let form={name:'',industry:'',website:'',notes:'',contactName:'',contactTitle:'',contactWx:'',contactPhone:'',contactEmail:'',rebatePolicy:'',defaultRebateRate:'',cooperationHistory:''};
+
+    if(isEdit){
+      const b=Storage.getBrandById(bid);
+      if(b)form={...b};
+      BrandDetailActions._isEdit=true;BrandDetailActions._bid=bid;
+    }else{
+      BrandDetailActions._isEdit=false;
+    }
+
+    const indIdx=INDUSTRIES.indexOf(form.industry);
+
+    let html=`<div class="page active"><div style="overflow-y:auto;max-height:calc(100vh - 120px);">
+    <div class="section-card"><div class="section-title">🏢 品牌信息</div>
+    <div class="form-group"><div class="form-label required">品牌名称</div><input class="form-input" id="b_name" placeholder="品牌名称" value="${Utils.escapeHtml(form.name)}"/></div>
+    <div class="form-group"><div class="form-label">所属行业</div><select class="picker-select" id="b_industry"><option value="">选择行业</option>${INDUSTRIES.map((ind,i)=>`<option value="${ind}"${i===indIdx?' selected':''}>${ind}</option>`).join('')}</select></div>
+    <div class="form-group"><div class="form-label">品牌官网</div><input class="form-input" id="b_website" placeholder="https://..." value="${Utils.escapeHtml(form.website||'')}"/></div>
+    <div class="form-group"><div class="form-label">备注</div><textarea class="form-textarea" id="b_notes" placeholder="关于这个品牌的备注信息...">${Utils.escapeHtml(form.notes||'')}</textarea></div></div>
+
+    <div class="section-card"><div class="section-title">👤 联系方式</div>
+    <div class="form-group"><div class="form-label">联系人姓名</div><input class="form-input" id="b_contactName" placeholder="BD/对接人姓名" value="${Utils.escapeHtml(form.contactName||'')}"/></div>
+    <div class="form-group"><div class="form-label">职位/角色</div><input class="form-input" id="b_contactTitle" placeholder="如：品牌BD、小红书负责人" value="${Utils.escapeHtml(form.contactTitle||'')}"/></div>
+    <div class="form-group"><div class="form-label">微信号</div><div class="input-with-copy"><input class="form-input" id="b_contactWx" placeholder="微信号" value="${Utils.escapeHtml(form.contactWx||'')}"/><span class="copy-inline" onclick="navigator.clipboard.writeText(document.getElementById('b_contactWx').value);UI.toast('已复制')">复制</span></div></div>
+    <div class="form-group"><div class="form-label">手机号</div><div class="input-with-copy"><input class="form-input" type="tel" id="b_contactPhone" placeholder="手机号码" value="${Utils.escapeHtml(form.contactPhone||'')}"/><span class="call-inline" onclick="window.open('tel:'+document.getElementById('b_contactPhone').value)">拨打</span></div></div>
+    <div class="form-group"><div class="form-label">邮箱</div><input class="form-input" id="b_contactEmail" placeholder="邮箱地址" value="${Utils.escapeHtml(form.contactEmail||'')}"/></div></div>
+
+    <div class="section-card"><div class="section-title">💼 合作信息</div>
+    <div class="form-group"><div class="form-label">返点政策</div><input class="form-input" id="b_rebatePolicy" placeholder="如：按合同约定10%返点" value="${Utils.escapeHtml(form.rebatePolicy||'')}"/></div>
+    <div class="form-group"><div class="form-label">常规返点率（%）</div><div class="input-suffix-wrap"><input class="form-input" type="number" id="b_defaultRebateRate" placeholder="如：10" value="${Utils.escapeHtml(String(form.defaultRebateRate||''))}"/><span class="input-suffix">%</span></div></div>
+    <div class="form-group"><div class="form-label">合作历史备注</div><textarea class="form-textarea" id="b_cooperationHistory" placeholder="过往合作记录、注意事项等...">${Utils.escapeHtml(form.cooperationHistory||'')}</textarea></div></div>
+
+    ${isEdit?`<div class="action-area-b"><button class="btn-save-b" onclick="BrandDetailActions.save()">${isEdit?'保存修改':'添加品牌'}</button><button class="btn-delete-b" onclick="BrandDetailActions.del()">删除品牌</button></div>`:`<div class="action-area-b"><button class="btn-save-b" onclick="BrandDetailActions.save()">添加品牌</button></div>`}
+    </div></div>`;
+    document.getElementById('pageContent').innerHTML=html;
+  }
+};
+
+// ===== SECTION 7: 页面操作函数 =====
+
+// --- 首页操作 ---
+const HomeActions={
+  submit(){
+    const bn=(document.getElementById('h_brandName').value||'').trim();
+    if(!bn){UI.toast('请填写品牌名');return;}
+    const pr=document.getElementById('h_price').value;
+    if(!pr||isNaN(parseFloat(pr))){UI.toast('请填写当月报价');return;}
+    const order={
+      id:Utils.genId(),
+      brandName:bn,
+      productName:(document.getElementById('h_productName').value||'').trim(),
+      scheduleDate:document.getElementById('h_scheduleDate').value||'',
+      outlineDate:document.getElementById('h_outlineDate').value||'',
+      draftDate:document.getElementById('h_draftDate').value||'',
+      price:parseFloat(pr)||0,
+      onlineRebateRate:parseFloat(document.getElementById('h_onlineRebateRate').value)||0,
+      offlineRebateRate:parseFloat(document.getElementById('h_offlineRebateRate').value)||0,
+      potatoCost:0,laborCost:0,
+      progress:'scheduled',
+      contentType:document.getElementById('h_contentType').value,
+      competitionRange:document.getElementById('h_competitionRange').value||'',
+      notes:'',
+      createTime:Utils.today(),
+      updateTime:Utils.today()
+    };
+    Storage.saveOrder(order);
+    UI.toast('已创建');
+    Router.navigate('home');
+  },
+  bindEvents(){}
+};
+
+// --- 新建/编辑操作 ---
+const OrderAddActions={
+  isEdit:false,_orderId:null,_originalOrder:null,
+  pickBrand(){
+    const brands=Storage.getBrands();
+    if(brands.length===0)return;
+    let options=brands.map((b,i)=>`<option value="${i}">${b.name}</option>`).join('');
+    UI.showModal(`<div class="modal-header"><span class="modal-title-b">选择品牌</span><span class="modal-close-b" onclick="UI.closeModal()">✕</span></div>
+      <select class="picker-select" id="pickBrandSel" style="margin-bottom:16px">${options}</select>
+      <div class="modal-btns"><div class="modal-btn cancel" onclick="UI.closeModal()">取消</div><div class="modal-btn confirm" onclick="const idx=document.getElementById('pickBrandSel').value;const b=Storage.getBrands()[idx];if(b){document.getElementById('a_brandName').value=b.name;}UI.closeModal();">选择</div></div>`);
+  },
+  calcPreview(){
+    const price=parseFloat(document.getElementById('a_price').value)||0;
+    if(price<=0){document.getElementById('a_profitPreview').style.display='none';return;}
+    const oR=parseFloat(document.getElementById('a_onlineRebateRate').value)||0;
+    const offR=parseFloat(document.getElementById('a_offlineRebateRate').value)||0;
+    const pC=parseFloat(document.getElementById('a_potatoCost')&&document.getElementById('a_potatoCost').value)||0;
+    const oRA=price*(oR/100);
+    const offRA=price*(offR/100);
+    const aftR=Math.round(price-oRA-offRA);
+    const tax=((aftR-pC)*0.01).toFixed(1)>=0?((aftR-pC)*0.01).toFixed(1):'0.0';
+    document.getElementById('pv_afterRebate').textContent='~¥'+Utils.formatMoney(aftR);
+    document.getElementById('pv_tax').textContent='~¥'+tax;
+    document.getElementById('a_profitPreview').style.display='';
+  },
+  submit(){
+    const bn=(document.getElementById('a_brandName').value||'').trim();
+    if(!bn){UI.toast('请填写品牌名');return;}
+    const pr=document.getElementById('a_price').value;
+    if(!pr||isNaN(parseFloat(pr))){UI.toast('请填写报价');return;}
+
+    if(OrderAddActions.isEdit){
+      // 编辑模式
+      if(!OrderAddActions._originalOrder||!OrderAddActions._orderId){UI.toast('编辑异常，请重试');return;}
+      const updated={
+        ...OrderAddActions._originalOrder,
+        brandName:bn,
+        productName:(document.getElementById('a_productName').value||'').trim(),
+        scheduleDate:document.getElementById('a_scheduleDate').value||'',
+        outlineDate:document.getElementById('a_outlineDate').value||'',
+        draftDate:document.getElementById('a_draftDate').value||'',
+        price:parseFloat(pr)||0,
+        onlineRebateRate:parseFloat(document.getElementById('a_onlineRebateRate').value)||0,
+        offlineRebateRate:parseFloat(document.getElementById('a_offlineRebateRate').value)||0,
+        potatoCost:parseFloat(document.getElementById('a_potatoCost').value)||0,
+        laborCost:parseFloat(document.getElementById('a_laborCost').value)||0,
+        progress:document.getElementById('a_progress').value,
+        contentType:document.getElementById('a_contentType').value,
+        competitionRange:document.getElementById('a_competitionRange').value||'',
+        notes:(document.getElementById('a_notes').value||'').trim(),
+        updateTime:Utils.today()
+      };
+      Storage.saveOrder(updated);
+      UI.toast('已更新');
+      setTimeout(()=>Router.goBack(),800);
+    }else{
+      // 新建模式
+      const order={
+        id:Utils.genId(),
+        brandName:bn,
+        productName:(document.getElementById('a_productName').value||'').trim(),
+        scheduleDate:document.getElementById('a_scheduleDate').value||'',
+        outlineDate:document.getElementById('a_outlineDate').value||'',
+        draftDate:document.getElementById('a_draftDate').value||'',
+        price:parseFloat(pr)||0,
+        onlineRebateRate:parseFloat(document.getElementById('a_onlineRebateRate').value)||0,
+        offlineRebateRate:parseFloat(document.getElementById('a_offlineRebateRate').value)||0,
+        potatoCost:parseFloat(document.getElementById('a_potatoCost').value)||0,
+        laborCost:parseFloat(document.getElementById('a_laborCost').value)||0,
+        progress:document.getElementById('a_progress').value,
+        contentType:document.getElementById('a_contentType').value,
+        competitionRange:document.getElementById('a_competitionRange').value||'',
+        notes:(document.getElementById('a_notes').value||'').trim(),
+        createTime:Utils.today(),
+        updateTime:Utils.today()
+      };
+      Storage.saveOrder(order);
+      UI.toast('已保存');
+      setTimeout(()=>Router.goBack(),800);
+    }
+  }
+};
+
+// --- 详情页操作 ---
+const OrderDetailActions={
+  _orderId:null,
+  edit(){Router.navigate('orderAdd',{id:this._orderId});},
+  del(){
+    UI.confirm('确认删除','确定删除该商单吗？',()=>{
+      Storage.deleteOrder(this._orderId);
+      UI.toast('已删除');
+      setTimeout(()=>Router.goBack(),800);
+    });
+  },
+  changeStatus(){
+    const order=Storage.getOrderById(this._orderId);
+    if(!order)return;
+    const curIdx=PROGRESS_STATUS.findIndex(s=>s.value===(order.progress||'scheduled'));
+    let options=PROGRESS_STATUS.map((s,i)=>`<option value="${s.value}"${i===curIdx?' selected':''}>${s.icon} ${s.label}</option>`).join('');
+    UI.showModal(`<div class="modal-header"><span class="modal-title-b">修改推进状态</span><span class="modal-close-b" onclick="UI.closeModal()">✕</span></div>
+      <select class="picker-select" id="statusSel" style="margin-bottom:16px;font-size:15px;font-weight:500;">${options}</select>
+      <div class="modal-btns"><div class="modal-btn cancel" onclick="UI.closeModal()">取消</div><div class="modal-btn confirm" onclick="const s=document.getElementById('statusSel').value;const o=Storage.getOrderById('${this._objectId||this._orderId}');if(o){o.progress=s;o.updateTime=Utils.today();Storage.saveOrder(o);UI.toast('状态已更新');UI.closeModal();Router.navigate('orderDetail',{id:o.id});}">保存</div></div>`);
+    // Fix: use closure correctly
+    const oid=this._orderId;
+    const confirmBtn=document.querySelector('#modalContainer .modal-btn.confirm');
+    if(confirmBtn){
+      confirmBtn.onclick=function(){
+        const s=document.getElementById('statusSel').value;
+        const o=Storage.getOrderById(oid);
+        if(o){o.progress=s;o.updateTime=Utils.today();Storage.saveOrder(o);UI.toast('状态已更新');UI.closeModal();Router.navigate('orderDetail',{id:o.id});}
+      };
+    }
+  }
+};
+// Fix reference
+Object.defineProperty(OrderDetailActions,'_objectId',{get:function(){return this._orderId;}});
+
+// --- 列表页操作 ---
+const OrderListActions={
+  _orders:[],_keyword:'',_progressFilter:'',
+  filter(){
+    this._keyword=(document.getElementById('list_search').value||'').toLowerCase();
+    this._renderFiltered();
+  },
+  setFilter(el){
+    document.querySelectorAll('.filter-tab').forEach(t=>t.classList.remove('active'));
+    el.classList.add('active');
+    this._progressFilter=el.dataset.val;
+    this._renderFiltered();
+  },
+  _renderFiltered(){
+    let list=[...this._orders];
+    if(this._keyword)list=list.filter(o=>(o.brandName||'').toLowerCase().includes(this._keyword)||(o.productName||'').toLowerCase().includes(this._keyword));
+    if(this._progressFilter)list=list.filter(o=>o.progress===this._progressFilter);
+    document.getElementById('orderListContainer').innerHTML=this._renderCards(list);
+  },
+  _renderCards(list){
+    if(list.length===0)return'<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">暂无商单记录</div><div class="empty-sub">点击「+新建」添加</div></div>';
+    return list.map(o=>`<div class="order-card"><div class="order-card-inner" onclick="Router.navigate(\'orderDetail\',{id:\'${o.id}'})">
+      <div class="order-header"><span class="brand-name">${Utils.escapeHtml(o.brandName)}</span><span class="tag ${o.progressInfo.cls}">${o.progressInfo.label}</span></div>
+      <div class="order-body">
+        <div class="order-info-row"><span class="info-icon">📦</span><span>${Utils.escapeHtml(o.productName||'未填写产品')}${o.contentTypeText?` <span class="info-tag">· ${o.contentTypeText}</span>`:''}</span></div>
+        ${o.competitionText?`<div class="order-info-row"><span class="info-icon">🎯</span><span>排竞 ${o.competitionText}</span></div>`:''}
+        ${o.scheduleDate?`<div class="order-info-row"><span class="info-icon">📅</span><span>档期：${o.scheduleDate}</span></div>`:''}
+        ${o.notes?`<div class="order-info-row"><span class="info-icon">💬</span><span class="notes-text">${Utils.escapeHtml(o.notes)}</span></div>`:''}
+      </div>
+      <div class="order-footer"><div class="order-price"><span class="price-label">报价</span><span class="price-num text-money">¥${o.price}</span></div>${o.profit.netProfit?`<div class="order-profit">净利 ¥${Utils.formatMoney(o.profit.netProfit)} (${o.profit.profitRate}%)</div>`:''}</div>
+    </div></div>`).join('');
+  }
+};
+
+// --- 日历操作 ---
+const CalendarState={year:0,month:0,selectedDate:'',_year:0,_month:0,ordersMap:{},detailOrderId:''},
+CalendarActions={
+  prev(){let y=CalendarState._year,m=CalendarState._month;m--;if(m<=0){m=12;y--;}CalendarState.year=y;CalendarState.month=m;CalendarState.detailOrderId='';PageRenderers.calendar();},
+  next(){let y=CalendarState._year,m=CalendarState._month;m++;if(m>12){m=1;y++;}CalendarState.year=y;CalendarState.month=m;CalendarState.detailOrderId='';PageRenderers.calendar();},
+  tapDay(ds){CalendarState.selectedDate=ds;CalendarState.detailOrderId='';PageRenderers.calendar();},
+  // 点击商单卡片：切换右侧详情面板（打开/关闭）
+  toggleDetail(oid){
+    if(CalendarState.detailOrderId===oid){
+      CalendarState.detailOrderId='';  // 再点一次关闭
+    }else{
+      CalendarState.detailOrderId=oid; // 打开该商单详情
+    }
+    PageRenderers.calendar();
+  },
+  /* ========== 拖拽移动商单档期 ========== */
+  _dragOrderId:null,  // 当前正在拖的商单ID
+  onDragStart(e,orderId){
+    e.stopPropagation();CalendarActions._dragOrderId=orderId;
+    e.dataTransfer.effectAllowed='move';
+    e.dataTransfer.setData('text/plain',orderId);
+    // 延迟添加拖拽样式，避免截图已变透明
+    setTimeout(()=>e.target.classList.add('cal-dragging'),0);
+  },
+  onDragOver(e){e.preventDefault();e.dataTransfer.dropEffect='move';},
+  onDragEnter(e,cell){
+    e.preventDefault();
+    if(!CalendarActions._dragOrderId)return;
+    cell.classList.add('cal-drop-target');
+  },
+  onDragLeave(e,cell){
+    cell.classList.remove('cal-drop-target');
+  },
+  onDrop(e,newDate){
+    e.preventDefault();e.stopPropagation();
+    const oid=CalendarActions._dragOrderId;
+    if(!oid)return;
+    const order=Storage.getOrderById(oid);
+    if(!order){UI.toast('商单不存在');return;}
+    const oldDate=order.scheduleDate||'未知日期';
+    order.scheduleDate=newDate;
+    order.updateTime=Utils.today();
+    Storage.saveOrder(order);
+    UI.toast(`📅 档期：${oldDate} → ${newDate}`);
+    CalendarActions._dragOrderId=null;
+    // 如果当前选中了这个商单，关闭详情面板（因为商单可能移到别的日期了）
+    if(CalendarState.detailOrderId===oid)CalendarState.detailOrderId='';
+    CalendarState.selectedDate='';
+    PageRenderers.calendar();
+    // 清除所有drop高亮
+    document.querySelectorAll('.cal-drop-target').forEach(el=>el.classList.remove('cal-drop-target'));
+  }
+};
+
+// --- 统计页操作 ---
+const StatsActions={period:'month',load(){
+  const orders=Storage.getOrders();
+  const period=this.period;
+  const now=new Date();
+
+  const filtered=orders.filter(o=>{
+    if(!o.createTime)return false;
+    const d=new Date(o.createTime);
+    if(period==='month')return d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth();
+    if(period==='quarter'){const q=Math.floor(now.getMonth()/3);return d.getFullYear()===now.getFullYear()&&Math.floor(d.getMonth()/3)===q;}
+    if(period==='year')return d.getFullYear()===now.getFullYear();
+    return true;
+  });
+
+  const validOrders=filtered.filter(o=>o.progress!=='abnormal');
+  const abnormalOrders=filtered.filter(o=>o.progress==='abnormal');
+
+  let totalNet=0,totalTax=0,totalPotato=0,totalLabor=0,rateSum=0,rateCount=0,revenue=0;
+  validOrders.forEach(o=>{
+    const p=Utils.calcProfit(o);
+    totalNet+=p.netProfit;totalTax+=p.taxEstimate;totalPotato+=parseFloat(o.potatoCost)||0;totalLabor+=parseFloat(o.laborCost)||0;
+    const pv=parseFloat(o.price)||0;if(pv>0){rateSum+=p.profitRate;rateCount++;}
+    revenue+=pv;
+  });
+
+  const orderList=filtered.map(o=>({...o,profit:Utils.calcProfit(o),progressInfo:Utils.getProgressInfo(o.progress),isValidForProfit:Utils.isValidForProfit(o),contentTypeText:(Utils.getContentTypeInfo(o.contentType)||{}).label||'',competitionText:(Utils.getCompetitionRangeInfo(o.competitionRange)||{}).label||''})).sort((a,b)=>new Date(b.scheduleDate||b.createTime)-new Date(a.scheduleDate||a.createTime));
+
+  // 进度分布
+  const pcCount={};filtered.forEach(o=>{pcCount[o.progress]=(pcCount[o.progress]||0)+1;});
+  const progressDist=Object.entries(pcCount).map(([k,v])=>({...Utils.getProgressInfo(k),count:v}));
+
+  // 品牌排行
+  const bm={};validOrders.forEach(o=>{const n=o.brandName||'未知';if(!bm[n])bm[n]={name:n,netProfit:0,count:0};bm[n].netProfit+=Utils.calcProfit(o).netProfit;bm[n].count++;});
+  const topBrands=Object.values(bm).sort((a,b)=>b.netProfit-a.netProfit).slice(0,5);
+
+  // 月度趋势
+  const monthlyData=[];
+  for(let i=5;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const mo=orders.filter(o=>(o.createTime||'').startsWith(k)&&o.progress!=='abnormal');
+    let mN=0;mo.forEach(o=>{mN+=Utils.calcProfit(o).netProfit;});
+    monthlyData.push({month:`${d.getMonth()+1}月`,count:mo.length,revenue:mo.reduce((s,o)=>s+(parseFloat(o.price)||0),0),netProfit:Math.round(mN)});
+  }
+
+  const stats={totalCount:validOrders.length,abnormalCount:abnormalOrders.length,totalNet:Math.round(totalNet),totalTax:Math.round(totalTax*100)/100,totalPotato:Math.round(totalPotato*100)/100,totalLabor:Math.round(totalLabor*100)/100,avgProfitRate:rateCount>0?Math.round(rateSum/rateCount*100)/100:0};
+
+  let html=`<div class="page active">
+    <div class="period-tabs">
+      <div class="period-tab ${period==='month'?'active':''}" onclick="StatsActions.setPeriod('month')">本月</div>
+      <div class="period-tab ${period==='quarter'?'active':''}" onclick="StatsActions.setPeriod('quarter')">本季</div>
+      <div class="period-tab ${period==='year'?'active':''}" onclick="StatsActions.setPeriod('year')">今年</div>
+      <div class="period-tab ${period==='all'?'active':''}" onclick="StatsActions.setPeriod('all')">全部</div>
+    </div>
+    <div style="overflow-y:auto;max-height:calc(100vh - 120px);">
+    <!-- 核心指标 -->
+    <div class="metrics-grid">
+      <div class="metric-card profit-main"><span class="metric-label">📊 预期净利润</span><span class="metric-val text-money-big">¥${Utils.formatMoney(stats.totalNet)}</span><span class="metric-sub">${stats.totalCount}单有效 · 异常${stats.abnormalCount}单</span></div>
+      <div class="metric-card"><span class="metric-label">平均利润率</span><span class="metric-val">${stats.avgProfitRate}%</span></div>
+      <div class="metric-card"><span class="metric-label">总薯条成本</span><span class="metric-val orange">¥${Utils.formatMoney(stats.totalPotato)}</span></div>
+      <div class="metric-card"><span class="metric-label">总女工成本</span><span class="metric-val orange">¥${Utils.formatMoney(stats.totalLabor)}</span></div>
+      <div class="metric-card"><span class="metric-label">税点预估</span><span class="metric-val tax">≈¥${Utils.formatMoney(stats.totalTax)}</span></div>
+      ${stats.abnormalCount>0?`<div class="metric-card warn"><span class="metric-label">⚠️ 异常商单</span><span class="metric-val warn-num">${stats.abnormalCount}单</span></div>`:''}
+    </div>
+
+    <!-- 公式说明 -->
+    <div class="section-card formula-card"><div class="section-title">🧮 利润公式说明</div><div class="formula-list">
+      <div class="formula-item"><span class="f-name">净利润</span><span class="f-formula">= 报价 - 线上返点 - 线下返点 - 薯条成本 - 女工成本</span></div>
+      <div class="formula-item"><span class="f-name">利润率</span><span class="f-formula">= 净利润 ÷ 报价 × 100%</span></div>
+      <div class="formula-item"><span class="f-name">税点预估</span><span class="f-formula">= (去返点利润 - 薯条成本) × 1%</span></div>
+    </div><div class="formula-hint text-gray">💡 除「异常」状态外，所有商单均计入利润汇总，异常状态自动剔除</div></div>
+
+    <!-- 商单明细 -->`;
+    if(orderList.length>0){
+      html+=`<div class="section-card"><div class="section-title">📋 商单明细</div>${orderList.map(o=>`<div class="ol-item" onclick="Router.navigate(\'orderDetail\',{id:\'${o.id}'})">
+        <div class="ol-top"><span class="ol-brand">${Utils.escapeHtml(o.brandName)}${o.productName?`<span class="ol-product"> · ${Utils.escapeHtml(o.productName)}</span>`:''}</span><span class="tag ${o.progressInfo.cls}">${o.progressInfo.label}</span></div>
+        <div class="ol-middle"><span class="ol-price">¥${o.price}</span><span class="ol-profit ${o.isValidForProfit?'valid':'invalid'}">净利 ¥${Utils.formatMoney(o.profit.netProfit)} (${o.profit.profitRate}%)</span></div>
+        ${o.contentTypeText||o.competitionText?`<div class="ol-tags">${o.contentTypeText?`<span class="ol-tag">📝 ${o.contentTypeText}</span>`:''}${o.competitionText?`<span class="ol-tag blue">🎯 ${o.competitionText}</span>`:''}</div>`:''}
+        <div class="ol-bottom text-gray">档期：${o.scheduleDate||'-'} <span style="margin-left:auto">创建：${o.createTime}</span></div>
+      </div>`).join('')}</div>`;
+    }
+
+    // 进度分布
+    if(progressDist.length>0){
+      html+=`<div class="section-card"><div class="section-title">📊 推进状态分布</div>${progressDist.map(item=>`<div class="prog-bar-wrap"><div class="prog-bar-row"><span class="prog-icon">${item.icon}</span><span class="prog-name">${item.label}</span><span class="prog-count">${item.count}单</span></div><div class="prog-fill-bg"><div class="prog-fill" style="width:${item.count/orderList.length*100}%"></div></div></div>`).join('')}</div>`;
+    }
+
+    if(stats.totalCount===0&&orderList.length===0){
+      html+=`<div class="empty-state"><div class="empty-icon">📊</div><div class="empty-text">暂无统计数据</div><div class="empty-sub">添加商单后这里会显示数据统计</div></div>`;
+    }
+    html+='<div style="height:20px"></div></div></div>';
+    document.getElementById('pageContent').innerHTML=html;
+  },
+  setPeriod(p){this.period=p;this.load();}
+};
+
+// --- 报价计算器操作 ---
+const QuoteActions={
+  load(){
+    const templates=Storage.getQuoteTemplates();
+    let html=`<div class="page active"><div style="overflow-y:auto;max-height:calc(100vh - 120px);">
+    <div class="section-card"><div class="section-title">💰 报价计算器</div>
+    <div class="calc-desc text-gray">根据粉丝数、互动率、内容类型智能估算合理报价区间</div>
+    <div class="form-group" style="margin-top:16px"><div class="form-label required">基础报价（元）</div>
+    <div class="input-prefix-wrap"><span class="input-prefix">¥</span><input class="form-input input-with-prefix" type="number" id="q_basePrice" placeholder="你的基础报价" oninput="QuoteActions.calculate()" value=""/></div></div>
+    <div class="form-group"><div class="form-label">内容类型</div>
+    <select class="picker-select" id="q_contentType" onchange="QuoteActions.calculate()">${QUOTE_CONTENT_TYPES.map((c,i)=>`<option value="${c}"${i===0?' selected':''}>${c}</option>`).join('')}</select></div>
+    <div class="two-col"><div class="form-group col"><div class="form-label">粉丝数</div><input class="form-input" type="number" id="q_followers" placeholder="如：100000" oninput="QuoteActions.calculate()"/></div><div class="form-group col"><div class="form-label">互动率（%）</div><input class="form-input" type="digit" id="q_engagement" placeholder="如：3.5" oninput="QuoteActions.calculate()"/></div></div></div>
+
+    <div class="result-card" id="quoteResult" style="display:none"></div>
+
+    ${templates.length>0?`<div class="section-card"><div class="section-title">📌 快速套用模板</div><div class="template-list">${templates.map(t=>`<div class="template-item"><div class="tpl-left"><div class="tpl-name">${Utils.escapeHtml(t.name)}</div><div class="tpl-desc text-gray">${t.desc||'点击套用基础报价'}</div></div><div class="tpl-right"><div class="tpl-price text-money">¥${t.basePrice}</div><div class="tpl-del" onclick="Storage.deleteQuoteTemplate('${t.id}');UI.toast('已删除');QuoteActions.load();event.stopPropagation();">删除</div></div></div>`).join('')}</div></div>`:''}
+
+    <div class="section-card"><div class="section-title">📖 计算说明</div><div class="tip-list">
+      <div class="tip-item"><span class="tip-icon">📷</span><span class="tip-text">图文笔记：1x 基础系数</span></div>
+      <div class="tip-item"><span class="tip-icon">🎥</span><span class="tip-text">视频笔记：2.5x 基础系数</span></div>
+      <div class="tip-item"><span class="tip-icon">📺</span><span class="tip-text">直播带货：5x 基础系数</span></div>
+      <div class="tip-item"><span class="tip-icon">📊</span><span class="tip-text">互动率≥5%：报价+20%；≥3%：+10%</span></div>
+      <div class="tip-item"><span class="tip-icon">👥</span><span class="tip-text">每10万粉丝：报价+5%</span></div>
+    </div></div>
+
+    <div class="add-template-area"><div class="add-tpl-btn" onclick="QuoteActions.showAddTpl()">+ 添加报价模板</div></div>
+    <div style="height:20px"></div></div></div>`;
+    document.getElementById('pageContent').innerHTML=html;
+  },
+  calculate(){
+    const bp=parseFloat(document.getElementById('q_basePrice').value);
+    if(!bp){document.getElementById('quoteResult').style.display='none';return;}
+    const ct=document.getElementById('q_contentType').value;
+    const fl=parseFloat(document.getElementById('q_followers').value)||0;
+    const eg=parseFloat(document.getElementById('q_engagement').value)||0;
+    const mult=CONTENT_MULTIPLIER[ct]||1;
+    const fb=fl>0?Math.max(1,1+(fl/100000)*0.05):1;
+    const eb=eg>=5?1.2:eg>=3?1.1:1;
+    let price=bp*mult*fb*eb;
+    const low=Math.round(price*0.8),high=Math.round(price*1.2),suggest=Math.round(price);
+    document.getElementById('quoteResult').style.display='';
+    document.getElementById('quoteResult').innerHTML=`
+      <div class="result-main"><div class="result-label">建议报价</div><div class="result-price text-primary">¥${Utils.formatMoney(suggest)}</div><div class="result-range text-gray">合理区间：¥${Utils.formatMoney(low)} ~ ¥${Utils.formatMoney(high)}</div></div>
+      <div class="result-detail">
+        <div class="detail-row-sm"><span class="dr-label">内容系数</span><span class="dr-value">${mult}x（${ct}）</span></div>
+        <div class="detail-row-sm"><span class="dr-label">粉丝加成</span><span class="dr-value">${fl>0?`+${((fb-1)*100).toFixed(1)}%（${(fl/10000).toFixed(0)}万粉)`:'未填写'}</span></div>
+        <div class="detail-row-sm"><span class="dr-label">互动加成</span><span class="dr-value">${eg>0?(eb===1.2?'+20%':eb===1.1?'+10%':'标准')+`（互动率${eg}%）`:'未填写'}</span></div>
+      </div>
+      <div class="copy-quote-btn" onclick="navigator.clipboard.writeText(\`【报价参考】\\n内容类型：${ct}\\n粉丝数：${fl?fl+'人':'未填'}\\n互动率：${eg?eg+'%':'未填'}\\n\\n建议报价：¥${Utils.formatMoney(suggest)}\\n报价区间：¥${Utils.formatMoney(low)} ~ ¥${Utils.formatMoney(high)}\`);UI.toast('已复制报价单')">📋 复制报价单</div>`;
+  },
+  showAddTpl(){
+    UI.showModal(`<div class="modal-header"><span class="modal-title-b">添加报价模板</span><span class="modal-close-b" onclick="UI.closeModal()">✕</span></div>
+      <div class="form-group"><div class="form-label required">模板名称</div><input class="form-input" id="tpl_name" placeholder="如：视频种草"/></div>
+      <div class="form-group"><div class="form-label required">基础报价（元）</div><div class="input-prefix-wrap"><span class="input-prefix">¥</span><input class="form-input input-with-prefix" type="number" id="tpl_basePrice" placeholder="基础报价"/></div></div>
+      <div class="form-group"><div class="form-label">备注说明</div><input class="form-input" id="tpl_desc" placeholder="可选"/></div>
+      <div class="modal-btns"><div class="modal-btn cancel" onclick="UI.closeModal()">取消</div><div class="modal-btn confirm" onclick="const n=document.getElementById('tpl_name').value.trim(),bp=document.getElementById('tpl_basePrice').value;if(!n||!bp){UI.toast('请填写模板名称和基础报价');return;}Storage.saveQuoteTemplate({id:Utils.genId(),name:n,basePrice:parseFloat(bp),desc:document.getElementById('tpl_desc').value.trim()});UI.toast('模板已保存');UI.closeModal();QuoteActions.load();">保存</div></div>`);
+  }
+};
+
+// --- 返点管理操作 ---
+const RebateActions={
+  load(){
+    const rebates=Storage.getRebates();
+    const orders=Storage.getOrders();
+    let totalExp=0,totalRec=0,totalPen=0;
+    rebates.forEach(r=>{
+      const amt=parseFloat(r.amount)||0;
+      if(r.status==='received')totalRec+=amt;
+      else if(r.status==='pending'){totalPen+=amt;totalExp+=amt;}
+      else totalExp+=amt;
+    });
+    totalExp+=totalRec;
+
+    const rebatesList=rebates.map(r=>({...r,statusLabel:r.status==='received'?'已收取':r.status==='overdue'?'逾期':'待收取',statusCls:r.status==='received'?'tag-settled':r.status==='overdue'?'tag-cancelled':'tag-pending',amountText:Utils.formatMoney(r.amount)}));
+
+    let html=`<div class="page active">
+    <div class="stats-bar"><div class="stat-item"><div class="stat-val-rebate">¥${Utils.formatMoney(totalExp)}</div><div class="stat-name">应收总计</div></div>
+    <div class="stat-item highlight"><div class="stat-val-rebate green">¥${Utils.formatMoney(totalRec)}</div><div class="stat-name">已收返点</div></div>
+    <div class="stat-item"><div class="stat-val-rebate orange">¥${Utils.formatMoney(totalPen)}</div><div class="stat-name">待收返点</div></div></div>
+
+    <div class="action-bar"><div class="add-rebate-btn" onclick="RebateActions.showAddForm()">+ 记录返点</div></div>
+
+    <div class="rebate-list">${rebatesList.length>0?rebatesList.map(r=>`<div class="rebate-item">
+      <div class="rebate-main"><span class="rebate-brand">${Utils.escapeHtml(r.brandName)}</span><span class="rebate-amount text-money">+¥${r.amountText}</span></div>
+      <div class="rebate-info"><span class="text-gray">${r.type==='percent'?r.rate+'%返点':r.type==='product'?'产品置换':'固定返点'}${r.dueDate?` · 到期：${r.dueDate}`:''}</span></div>
+      <div class="rebate-footer"><span class="tag ${r.statusCls}">${r.statusLabel}</span><div class="rebate-actions">
+        ${r.status!=='received'?`<span class="action-btn-sm green-btn" onclick="Storage.saveRebate({...Storage.getRebates().find(x=>x.id==='${r.id}'),status:'received',receivedDate:Utils.today()});UI.toast('已标记收取');RebateActions.load();event.stopPropagation();">✓ 已收</span>`:''}
+        <span class="action-btn-sm edit-btn-sm" onclick="RebateActions.editForm('${r.id}')">编辑</span>
+        <span class="action-btn-sm del-btn-sm" onclick="UI.confirm('确认删除','确定删除此返点记录吗？',()=>{Storage.deleteRebate('${r.id}');UI.toast('已删除');RebateActions.load();});event.stopPropagation();">删除</span>
+      </div></div>
+      ${r.notes?`<div class="rebate-notes">💬 ${Utils.escapeHtml(r.notes)}</div>`:''}
+    </div>`).join(''):''}</div>
+
+    ${rebatesList.length===0?`<div class="empty-state"><div class="empty-icon">🎁</div><div class="empty-text">还没有返点记录</div><div class="empty-sub">点击「记录返点」开始管理你的返点</div></div>`:''}
+    </div>`;
+    document.getElementById('pageContent').innerHTML=html;
+    this._orders=orders;
+  },
+  showAddForm(){
+    const orders=this._orders||Storage.getOrders();
+    const orderNames=orders.map(o=>`${o.brandName}（¥${o.price}）`);
+    UI.showModal(`<div class="modal-header"><span class="modal-title-b">记录返点</span><span class="modal-close-b" onclick="UI.closeModal()">✕</span></div>
+      <div style="max-height:65vh;overflow-y:auto;">
+      <div class="form-group"><div class="form-label required">品牌名称</div>
+      ${orders.length>0?`<div class="input-with-picker-inline"><input class="form-input" id="r_brandName" placeholder="品牌名"/><div class="pick-btn-inline" onclick="const sel=document.getElementById('r_orderSel');if(sel){const o=this._orders||Storage.getOrders()[sel.value];if(o){document.getElementById('r_brandName').value=o.brandName;document.getElementById('r_basePrice').value=o.price;RebateActions.autoCalc();}}">从商单选</div></div><select id="r_orderSel" style="display:none" onchange="const o=Storage.getOrders()[this.value];if(o){document.getElementById('r_brandName').value=o.brandName;document.getElementById('r_basePrice').value=o.price;RebateActions.autoCalc();}">${orders.map((o,i)=>`<option value="${i}">${orderNames[i]}</option>`).join('')}</select>`
+      :`<input class="form-input" id="r_brandName" placeholder="品牌名"/>`}
+      </div>
+      <div class="form-group"><div class="form-label">返点类型</div><select class="picker-select" id="r_type" onchange="document.getElementById('r_type_row').style.display=this.value==='percent'?'':'none'">${REBATE_TYPES.map((t,i)=>`<option value="${REBATE_TYPE_VALUES[i]}">${t}</option>`).join('')}</select></div>
+      <div class="form-group" id="r_type_row" style="display:none"><div class="form-label">返点比例（%）</div><div class="input-suffix-wrap"><input class="form-input" type="number" id="r_rate" placeholder="如：10" oninput="RebateActions.autoCalc()"/><span class="input-suffix">%</span></div></div>
+      <div class="form-group"><div class="form-label required">返点金额（元）</div><div class="input-prefix-wrap"><span class="input-prefix">¥</span><input class="form-input input-with-prefix" type="number" id="r_amount" placeholder="返点金额"/></div></div>
+      <div class="form-group"><div class="form-label">到期日期</div><input type="date" class="picker-select" id="r_dueDate"/></div>
+      <div class="form-group"><div class="form-label">状态</div><select class="picker-select" id="r_status">${REBATE_STATUSES.map((s,i)=>`<option value="${REBATE_STATUS_VALUES[i]}">${s}</option>`).join('')}</select></div>
+      <div class="form-group"><div class="form-label">备注</div><input class="form-input" id="r_notes" placeholder="可选备注"/></div></div>
+      <div class="modal-btns"><div class="modal-btn cancel" onclick="UI.closeModal()">取消</div><div class="modal-btn confirm" onclick="RebateActions.saveRebate(false)">记录返点</div></div>`);
+    // Show/hide type row
+    setTimeout(()=>{
+      const typeSel=document.getElementById('r_type');
+      const typeRow=document.getElementById('r_type_row');
+      if(typeSel&&typeRow)typeRow.style.display=typeSel.value==='percent'?'':'none';
+    },50);
+  },
+  autoCalc(){
+    const rate=document.getElementById('r_rate')?.value;
+    const bp=document.getElementById('r_basePrice')?.value;
+    if(rate&&bp){
+      const amt=Math.round(parseFloat(bp)*parseFloat(rate)/100);
+      const amtEl=document.getElementById('r_amount');
+      if(amtEl)amtEl.value=String(amt);
+    }
+  },
+  editForm(id){
+    const r=Storage.getRebates().find(x=>x.id===id);if(!r)return;
+    const tIdx=REBATE_TYPE_VALUES.indexOf(r.type);
+    const sIdx=REBATE_STATUS_VALUES.indexOf(r.status||'pending');
+    UI.showModal(`<div class="modal-header"><span class="modal-title-b">编辑返点</span><span class="modal-close-b" onclick="UI.closeModal()">✕</span></div>
+      <div style="max-height:65vh;overflow-y:auto;">
+      <div class="form-group"><div class="form-label required">品牌名称</div><input class="form-input" id="r_brandName" value="${Utils.escapeHtml(r.brandName||'')}"/></div>
+      <div class="form-group"><div class="form-label">返点类型</div><select class="picker-select" id="r_type">${REBATE_TYPES.map((t,i)=>`<option value="${REBATE_TYPE_VALUES[i]}"${i===tIdx?' selected':''}>${t}</option>`).join('')}</select></div>
+      <div class="form-group"><div class="form-label required">返点金额（元）</div><div class="input-prefix-wrap"><span class="input-prefix">¥</span><input class="form-input input-with-prefix" type="number" id="r_amount" value="${r.amount}"/></div></div>
+      <div class="form-group"><div class="form-label">到期日期</div><input type="date" class="picker-select" id="r_dueDate" value="${r.dueDate||''}"/></div>
+      <div class="form-group"><div class="form-label">状态</div><select class="picker-select" id="r_status">${REBATE_STATUSES.map((s,i)=>`<option value="${REBATE_STATUS_VALUES[i]}"${i===sIdx?' selected':''}>${s}</option>`).join('')}</select></div>
+      <div class="form-group"><div class="form-label">备注</div><input class="form-input" id="r_notes" value="${Utils.escapeHtml(r.notes||'')}"/></div></div>
+      <div class="modal-btns"><div class="modal-btn cancel" onclick="UI.closeModal()">取消</div><div class="modal-btn confirm" onclick="RebateActions.saveRebate(true,'${id}')">保存修改</div></div>`);
+  },
+  saveRebate(isEdit,id){
+    const bn=(document.getElementById('r_brandName').value||'').trim();
+    if(!bn){UI.toast('请填写品牌名称');return;}
+    const amt=document.getElementById('r_amount').value;
+    if(!amt){UI.toast('请填写返点金额');return;}
+    const rebate={
+      ...(isEdit?(Storage.getRebates().find(x=>x.id===id)||{}):{}),
+      id:isEdit?id:Utils.genId(),
+      orderId:document.getElementById('r_orderSel')?.value!==undefined?Storage.getOrders()[document.getElementById('r_orderSel').value]?.id||'':undefined,
+      brandName:bn,
+      amount:parseFloat(amt),
+      type:document.getElementById('r_type').value,
+      rate:document.getElementById('r_rate')?.value||'',
+      dueDate:document.getElementById('r_dueDate')?.value||'',
+      status:document.getElementById('r_status')?.value||'pending',
+      notes:(document.getElementById('r_notes')?.value||'').trim(),
+      createTime:Utils.today()
+    };
+    Storage.saveRebate(rebate);
+    UI.closeModal();
+    UI.toast(isEdit?'已更新':'已记录');
+    RebateActions.load();
+  }
+};
+
+// --- 品牌列表操作 ---
+const BrandListActions={
+  load(){
+    const orders=Storage.getOrders();
+    const brands=Storage.getBrands().map(b=>{
+      const bo=orders.filter(o=>o.brandId===b.id||o.brandName===b.name);
+      const rev=bo.filter(o=>o.progress!=='abnormal').reduce((s,o)=>s+(parseFloat(o.price)||0),0);
+      return {...b,orderCount:bo.length,totalRevenueText:Utils.formatMoney(rev),initial:(b.name||'').charAt(0)};
+    });
+    this._brands=brands;
+    this._render(brands);
+  },
+  _brands:[],
+  _keyword:'',
+  search(){
+    this._keyword=(document.getElementById('bs_search')?.value||'').toLowerCase();
+    const kw=this._keyword;
+    const list=kw?this._brands.filter(b=>(b.name||'').toLowerCase().includes(kw)||(b.industry||'').toLowerCase().includes(kw)||(b.contactName||'').toLowerCase().includes(kw)):this._brands;
+    this._render(list);
+  },
+  _render(filtered){
+    let html=`<div class="page active">
+    <div class="search-bar"><div class="search-input-wrap"><span class="search-icon">🔍</span><input class="search-input" id="bs_search" placeholder="搜索品牌、行业、联系人..." oninput="BrandListActions.search()"/></div><div class="add-btn" onclick="Router.navigate(\'brandDetail\')">+添加</div></div>
+    ${filtered.length>0?`<div class="export-bar"><div class="export-btn" onclick="BrandListActions.exportCSV()">📥 导出联系方式 (CSV)</div></div>`:''}
+    <div class="brand-list-page">${filtered.length>0?filtered.map(b=>`<div class="brand-card" onclick="Router.navigate(\'brandDetail',{id:\'${b.id}'})">
+      <div class="brand-avatar"><span class="avatar-text">${b.initial}</span></div>
+      <div class="brand-info-page"><div class="brand-name-row"><span class="brand-name-page">${Utils.escapeHtml(b.name)}</span>${b.industry?`<span class="brand-industry">${Utils.escapeHtml(b.industry)}</span>`:''}</div>
+      ${b.contactName?`<div class="contact-info-b"><span class="contact-icon-b">👤</span><span class="contact-name-b">${Utils.escapeHtml(b.contactName)}</span></div>`:''}
+      ${b.contactPhone?`<div class="contact-info-b"><span class="contact-icon-b">📱</span><span class="contact-phone-b">${Utils.escapeHtml(b.contactPhone)}</span></div>`:''}
+      <div class="brand-stats-b"><span class="stat-text-b">共 ${b.orderCount} 单</span><span class="stat-sep-b">·</span><span class="text-money stat-text-b">¥${b.totalRevenueText}</span></div></div>
+      <div class="brand-action"><span class="more-icon-b">›</span></div>
+    </div>`).join(''):`<div class="empty-state"><div class="empty-icon">🏢</div><div class="empty-text">${this._keyword?'未找到匹配结果':'还没有品牌联系方式'}</div><div class="empty-sub"${this._keyword?'':' style=""'}>${this._keyword?'':'点击「+添加」录入品牌信息'}</div></div>`}
+    </div>`;
+    document.getElementById('pageContent').innerHTML=html;
+  },
+  exportCSV(){
+    const brands=Storage.getBrands();
+    let csv='\uFEFF品牌名称,所属行业,联系人,职位,微信号,手机号,邮箱,返点政策,合作备注\n';
+    const esc=s=>`"${(s||'-').toString().replace(/"/g,'""')}"`;
+    brands.forEach(b=>csv+=[esc(b.name),esc(b.industry),esc(b.contactName),esc(b.contactTitle),esc(b.contactWx),esc(b.contactPhone),esc(b.contactEmail),esc(b.rebatePolicy),esc(b.notes)].join(',')+'\n');
+
+    const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download='商单品牌联系方式.csv';a.click();
+    URL.revokeObjectURL(url);
+    UI.toast(`已导出 ${brands.length} 条数据`);
+  }
+};
+
+// --- 品牌详情操作 ---
+const BrandDetailActions={
+  _isEdit:false,_bid:null,
+  save(){
+    const name=(document.getElementById('b_name').value||'').trim();
+    if(!name){UI.toast('请填写品牌名称');return;}
+    const brand={
+      ...this._isEdit?(Storage.getBrandById(this._bid)||{}):{},
+      id:this._isEdit?this._bid:Utils.genId(),
+      name:name,
+      industry:document.getElementById('b_industry').value,
+      website:(document.getElementById('b_website').value||'').trim(),
+      notes:(document.getElementById('b_notes').value||'').trim(),
+      contactName:(document.getElementById('b_contactName').value||'').trim(),
+      contactTitle:(document.getElementById('b_contactTitle').value||'').trim(),
+      contactWx:(document.getElementById('b_contactWx').value||'').trim(),
+      contactPhone:(document.getElementById('b_contactPhone').value||'').trim(),
+      contactEmail:(document.getElementById('b_contactEmail').value||'').trim(),
+      rebatePolicy:(document.getElementById('b_rebatePolicy').value||'').trim(),
+      defaultRebateRate:(document.getElementById('b_defaultRebateRate').value||''),
+      cooperationHistory:(document.getElementById('b_cooperationHistory').value||'').trim(),
+      updateTime:Utils.today()
+    };
+    Storage.saveBrand(brand);
+    UI.toast(this._isEdit?'已更新':'品牌已保存');
+    setTimeout(()=>Router.goBack(),800);
+  },
+  del(){
+    UI.confirm('确认删除','确定删除该品牌吗？',()=>{
+      Storage.deleteBrand(this._bid);
+      UI.toast('已删除');
+      setTimeout(()=>Router.goBack(),800);
+    });
+  }
+};
+
+// ===== SECTION 8: 应用初始化 =====
+document.addEventListener('DOMContentLoaded',()=>{
+  Router.init();
+});
+</script>
+</body>
+</html>

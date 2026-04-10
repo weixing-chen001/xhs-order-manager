@@ -1,0 +1,104 @@
+<view class="page-container">
+  <!-- 月份导航 -->
+  <view class="month-nav">
+    <view class="nav-btn" bindtap="prevMonth">‹</view>
+    <view class="month-title">{{year}}年{{month}}月</view>
+    <view class="nav-btn" bindtap="nextMonth">›</view>
+  </view>
+
+  <!-- 星期头 -->
+  <view class="week-header">
+    <text class="week-day">日</text>
+    <text class="week-day">一</text>
+    <text class="week-day">二</text>
+    <text class="week-day">三</text>
+    <text class="week-day">四</text>
+    <text class="week-day">五</text>
+    <text class="week-day">六</text>
+  </view>
+
+  <!-- 日历网格 -->
+  <view class="calendar-grid">
+    <view class="cal-cell empty" wx:for="{{days}}" wx:key="{{index}}" wx:if="{{item.empty}}"></view>
+    
+    <view class="cal-cell {{item.isSelected ? 'selected' : ''}} {{item.isToday ? 'today' : ''}}"
+          wx:for="{{days}}" wx:key="{{index}}" wx:if="{{!item.empty}}"
+          data-date="{{item.dateStr}}" bindtap="tapDay">
+      <text class="day-num">{{item.day}}</text>
+      <!-- 有商单时显示5行信息 -->
+      <view class="cal-order-info" wx:if="{{item.hasOrder && item.orders}}">
+        <block wx:for="{{item.orders}}" wx:for-item="o" wx:for-index="idx" wx:key="id">
+          <!-- 第1行：品牌·产品 -->
+          <view class="cal-line1">
+            <text class="cal-brand">{{o.brandName}}<text wx:if="{{o.productName}}"> · {{o.productName}}</text></text>
+          </view>
+          <!-- 第2行：进度标签 -->
+          <view class="cal-line2">
+            <view class="cal-tag {{o.progressInfo.cls}}">{{o.progressInfo.shortLabel}}</view>
+          </view>
+          <!-- 第3行：内容形式 -->
+          <view class="cal-line3" wx:if="{{o.contentTypeText}}">
+            <text class="cal-content">📝 {{o.contentTypeText}}</text>
+          </view>
+          <!-- 第4行：排竞范围 -->
+          <view class="cal-line4" wx:if="{{o.competitionText}}">
+            <text class="cal-compete">🎯 {{o.competitionText}}</text>
+          </view>
+          <!-- 第5行：备注 -->
+          <view class="cal-line5" wx:if="{{o.notes}}">
+            <text class="cal-notes">💬 {{o.notes}}</text>
+          </view>
+        </block>
+      </view>
+      <!-- 无商单详情时保留圆点 -->
+      <view class="dot-wrap" wx:elif="{{item.hasOrder}}">
+        <view class="order-dot" style="background:#FF2442"></view>
+        <text class="order-count" wx:if="{{item.orderCount > 1}}">{{item.orderCount}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 当日商单详情 -->
+  <view class="day-detail" wx:if="{{dayOrders.length > 0}}">
+    <view class="detail-title">
+      <text>{{selectedDate}} 商单排期（{{dayOrders.length}}个）</text>
+      <view class="add-for-date" data-date="{{selectedDate}}" bindtap="goToAddForDate">+添加</view>
+    </view>
+    
+    <scroll-view scroll-y class="day-order-list">
+      <view class="day-order-card" 
+            wx:for="{{dayOrders}}" 
+            wx:key="id" 
+            data-id="{{item.id}}" 
+            bindtap="goToDetail">
+        <!-- 第一行：品牌·产品 -->
+        <view class="doc-row1">
+          <text class="doc-brand-product">{{item.brandName}}<text wx:if="{{item.productName}}"> · {{item.productName}}</text></text>
+          <view class="tag {{item.progressInfo.cls}}">{{item.progressInfo.label}}</view>
+        </view>
+        <!-- 第二行：内容形式 -->
+        <view class="doc-row2" wx:if="{{item.contentTypeText}}">
+          <text class="doc-content-type">📝 {{item.contentTypeText}}</text>
+        </view>
+        <!-- 第三行：排竞情况 -->
+        <view class="doc-row3" wx:if="{{item.competitionText}}">
+          <text class="doc-competition">🎯 排竞 {{item.competitionText}}</text>
+        </view>
+        <!-- 底部信息栏 -->
+        <view class="doc-bottom">
+          <text class="doc-price">¥{{item.price}}</text>
+          <text class="doc-profit text-gray">净利 ¥{{item.profit.netProfit}} ({{item.profit.profitRate}}%)</text>
+        </view>
+        <!-- 调整按钮 -->
+        <view class="adjust-bar">
+          <text class="adjust-btn" data-id="{{item.id}}" catchtap="changeSchedule">📅 调整档期</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <view class="day-detail empty-detail" wx:elif="{{selectedDate}}">
+    <text class="empty-text">当天无商单安排</text>
+    <view class="add-for-date-btn" data-date="{{selectedDate}}" bindtap="goToAddForDate">+ 添加商单到此日期</view>
+  </view>
+</view>

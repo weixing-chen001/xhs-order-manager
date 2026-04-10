@@ -1,0 +1,157 @@
+<view class="page-container">
+  <scroll-view scroll-y class="form-scroll">
+    
+    <!-- 基本信息 -->
+    <view class="section-card">
+      <view class="section-title">📦 品牌与产品</view>
+      
+      <view class="form-group">
+        <view class="form-label required">品牌名称</view>
+        <view class="input-with-picker" wx:if="{{brands.length > 0}}">
+          <input class="form-input" placeholder="品牌名" value="{{form.brandName}}" data-field="brandName" bindinput="onFormInput" />
+          <picker range="{{brandNames}}" bindchange="onBrandChange">
+            <view class="pick-btn">从品牌库选</view>
+          </picker>
+        </view>
+        <input wx:else class="form-input" placeholder="输入品牌名称" value="{{form.brandName}}" data-field="brandName" bindinput="onFormInput" />
+      </view>
+
+      <view class="form-group">
+        <view class="form-label">产品名称</view>
+        <input class="form-input" placeholder="推广的产品名" value="{{form.productName}}" data-field="productName" bindinput="onFormInput" />
+      </view>
+
+      <view class="form-group">
+        <view class="form-label">内容形式</view>
+        <picker mode="selector" range="{{contentTypes}}" range-key="label" value="{{contentTypeIdx}}" bindchange="onContentTypeChange">
+          <view class="picker-view">{{contentTypeIdx >= 0 ? contentTypes[contentTypeIdx].label : '选择内容形式'}} ›</view>
+        </picker>
+      </view>
+    </view>
+
+    <!-- 排期时间 -->
+    <view class="section-card">
+      <view class="section-title">📅 排期时间</view>
+      
+      <view class="form-row two-col">
+        <view class="form-group col">
+          <view class="form-label required">预定档期</view>
+          <picker mode="date" value="{{form.scheduleDate}}" bindchange="onScheduleDateChange">
+            <view class="picker-view">{{form.scheduleDate || '选择日期'}}</view>
+          </picker>
+        </view>
+        <view class="form-group col">
+          <view class="form-label">大纲时间</view>
+          <picker mode="date" value="{{form.outlineDate}}" bindchange="onOutlineDateChange">
+            <view class="picker-view">{{form.outlineDate || '选择日期'}}</view>
+          </picker>
+        </view>
+      </view>
+      
+      <view class="form-group">
+        <view class="form-label">初稿时间</view>
+        <picker mode="date" value="{{form.draftDate}}" bindchange="onDraftDateChange">
+          <view class="picker-view">{{form.draftDate || '选择日期'}}</view>
+        </picker>
+      </view>
+    </view>
+
+    <!-- 排竞管理 -->
+    <view class="section-card">
+      <view class="section-title">🎯 排竞管理</view>
+      <picker mode="selector" range="{{competitionRanges}}" range-key="label" value="{{competitionIdx}}" bindchange="onCompetitionChange">
+        <view class="picker-view">{{competitionIdx >= 0 ? (competitionRanges[competitionIdx] ? competitionRanges[competitionIdx].label : '不设置') : '选择排竞范围'}} ›</view>
+      </picker>
+    </view>
+
+    <!-- 报价 & 返点 -->
+    <view class="section-card">
+      <view class="section-title">💰 报价 & 返点</view>
+      
+      <view class="form-group">
+        <view class="form-label required">当月报价（元）</view>
+        <view class="input-prefix-wrap">
+          <text class="input-prefix">¥</text>
+          <input class="form-input input-with-prefix" type="digit" placeholder="报价金额" value="{{form.price}}" data-field="price" bindinput="onFormInput" />
+        </view>
+      </view>
+
+      <view class="form-row two-col">
+        <view class="form-group col">
+          <view class="form-label">线上返点（%）</view>
+          <view class="input-suffix-wrap">
+            <input class="form-input input-with-suffix" type="digit" placeholder="如：10" value="{{form.onlineRebateRate}}" data-field="onlineRebateRate" bindinput="onFormInput" />
+            <text class="input-suffix">%</text>
+          </view>
+        </view>
+        <view class="form-group col">
+          <view class="form-label">线下返点（%）</view>
+          <view class="input-suffix-wrap">
+            <input class="form-input input-with-suffix" type="digit" placeholder="如：5" value="{{form.offlineRebateRate}}" data-field="offlineRebateRate" bindinput="onFormInput" />
+            <text class="input-suffix">%</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 利润预览 -->
+      <view class="profit-preview" wx:if="{{form.price && !isNaN(form.price)}}">
+        <view class="preview-title">🧮 利润预览</view>
+        <view class="preview-grid">
+          <view class="pv-item">
+            <text class="pv-label">去返点利润</text>
+            <text class="pv-val">~¥{{profitPreview.afterRebate || '-'}}</text>
+          </view>
+          <view class="pv-item">
+            <text class="pv-label">税点预估(1%)</text>
+            <text class="pv-val small">~¥{{profitPreview.tax || '-'}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 运营成本 -->
+    <view class="section-card">
+      <view class="section-title">⚙️ 运营成本（可选）</view>
+      
+      <view class="form-row two-col">
+        <view class="form-group col">
+          <view class="form-label">薯条成本（元）</view>
+          <view class="input-prefix-wrap">
+            <text class="input-prefix">¥</text>
+            <input class="form-input input-with-prefix" type="digit" placeholder="0" value="{{form.potatoCost}}" data-field="potatoCost" bindinput="onFormInput" />
+          </view>
+        </view>
+        <view class="form-group col">
+          <view class="form-label">女工成本（元）</view>
+          <view class="input-prefix-wrap">
+            <text class="input-prefix">¥</text>
+            <input class="form-input input-with-prefix" type="digit" placeholder="0" value="{{form.laborCost}}" data-field="laborCost" bindinput="onFormInput" />
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 推进状态 -->
+    <view class="section-card">
+      <view class="section-title">📊 推进状态</view>
+      <picker mode="selector" range="{{progressList}}" range-key="label" value="{{progressIdx}}" bindchange="onProgressChange">
+        <view class="picker-view picker-lg">
+          <text>{{progressList[progressIdx].icon}} {{progressList[progressIdx].label}}</text>
+          <text class="picker-arrow">›</text>
+        </view>
+      </picker>
+    </view>
+
+    <!-- 备注 -->
+    <view class="section-card">
+      <view class="section-title">💬 备注</view>
+      <textarea class="form-textarea" placeholder="其他备注..." maxlength="500"
+                value="{{form.notes}}" data-field="notes" bindinput="onFormInput" />
+    </view>
+
+    <!-- 提交 -->
+    <view class="submit-area">
+      <button class="btn-primary submit-btn" bindtap="submit">{{isEdit ? '保存修改' : '创建商单'}}</button>
+    </view>
+  </scroll-view>
+</view>

@@ -1,0 +1,153 @@
+<view class="page-container">
+  <!-- 顶部标题 -->
+  <view class="header">
+    <view class="header-left">
+      <view class="header-title">商单管家 🌹</view>
+      <view class="header-sub">小红书博主专用</view>
+    </view>
+    <view class="header-add" bindtap="goToAddFull">
+      <text class="add-icon">+</text>
+    </view>
+  </view>
+
+  <!-- 快速录入卡片 -->
+  <view class="card quick-entry-card">
+    <view class="card-title">📝 新建商单</view>
+    
+    <!-- 品牌名 & 产品名 -->
+    <view class="form-row two-col">
+      <view class="form-item col">
+        <text class="field-label required">品牌名</text>
+        <input class="quick-input" placeholder="品牌名称" value="{{form.brandName}}" data-field="brandName" bindinput="onFormInput" />
+      </view>
+      <view class="form-item col">
+        <text class="field-label">产品名</text>
+        <input class="quick-input" placeholder="产品名称" value="{{form.productName}}" data-field="productName" bindinput="onFormInput" />
+      </view>
+    </view>
+
+    <!-- 内容形式 & 排竞 -->
+    <view class="form-row two-col">
+      <view class="form-item col">
+        <text class="field-label">内容形式</text>
+        <picker mode="selector" range="{{contentTypes}}" range-key="label" value="{{contentTypeIdx}}" bindchange="onContentTypeChange">
+          <view class="quick-picker">{{contentTypes[contentTypeIdx] ? contentTypes[contentTypeIdx].label : '选择'}}</view>
+        </picker>
+      </view>
+      <view class="form-item col">
+        <text class="field-label">排竞管理</text>
+        <picker mode="selector" range="{{competitionRanges}}" range-key="label" value="{{competitionIdx}}" bindchange="onCompetitionChange">
+          <view class="quick-picker">{{competitionIdx >= 0 ? (competitionRanges[competitionIdx] ? competitionRanges[competitionIdx].label : '不设') : '选择'}}</view>
+        </picker>
+      </view>
+    </view>
+
+    <!-- 档期时间行 -->
+    <view class="form-row three-col">
+      <view class="form-item col-sm">
+        <text class="field-label">预定档期</text>
+        <picker mode="date" value="{{form.scheduleDate}}" bindchange="onScheduleDateChange">
+          <view class="quick-picker">{{form.scheduleDate || '选择'}}</view>
+        </picker>
+      </view>
+      <view class="form-item col-sm">
+        <text class="field-label">大纲时间</text>
+        <picker mode="date" value="{{form.outlineDate}}" bindchange="onOutlineDateChange">
+          <view class="quick-picker">{{form.outlineDate || '选择'}}</view>
+        </picker>
+      </view>
+      <view class="form-item col-sm">
+        <text class="field-label">初稿时间</text>
+        <picker mode="date" value="{{form.draftDate}}" bindchange="onDraftDateChange">
+          <view class="quick-picker">{{form.draftDate || '选择'}}</view>
+        </picker>
+      </view>
+    </view>
+
+    <!-- 报价 & 返点 -->
+    <view class="form-row four-col">
+      <view class="form-item col-xs">
+        <text class="field-label required">当月报价</text>
+        <view class="input-prefix-wrap sm">
+          <text class="prefix">¥</text>
+          <input class="quick-input prefix-in" type="digit" placeholder="0" value="{{form.price}}" data-field="price" bindinput="onFormInput" />
+        </view>
+      </view>
+      <view class="form-item col-xs">
+        <text class="field-label">线上返点%</text>
+        <input class="quick-input" type="digit" placeholder="0" value="{{form.onlineRebateRate}}" data-field="onlineRebateRate" bindinput="onFormInput" />
+      </view>
+      <view class="form-item col-xs">
+        <text class="field-label">线下返点%</text>
+        <input class="quick-input" type="digit" placeholder="0" value="{{form.offlineRebateRate}}" data-field="offlineRebateRate" bindinput="onFormInput" />
+      </view>
+      <view class="form-item col-xs btn-col">
+        <view class="quick-submit-btn" bindtap="submitQuick">创建</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 本月利润概览 -->
+  <view class="card profit-overview">
+    <view class="profit-header">
+      <text class="card-title">💰 本月预期利润</text>
+      <text class="profit-hint text-gray">（已定档商单汇总）</text>
+    </view>
+    <view class="profit-num text-money-large">¥{{monthProfit}}</view>
+    <view class="profit-meta">
+      <text class="meta-item">有效 {{monthOrderCount}} 单</text>
+      <text class="meta-sep">|</text>
+      <text class="meta-item meta-abnormal" wx:if="{{abnormalCount > 0}}">异常 {{abnormalCount}} 单</text>
+    </view>
+  </view>
+
+  <!-- 近期排期 -->
+  <view class="card" wx:if="{{upcomingOrders.length > 0}}">
+    <view class="card-title flex-between">
+      <text>📅 近期档期</text>
+      <text class="card-more text-gray" bindtap="goToCalendar">日历 ></text>
+    </view>
+    <view class="upcoming-list">
+      <view class="upcoming-item" wx:for="{{upcomingOrders}}" wx:key="id" data-id="{{item.id}}" bindtap="goToDetail">
+        <view class="upcoming-brand">{{item.brandName}} · {{item.productName}}</view>
+        <view class="upcoming-info text-gray">
+          {{item.scheduleDate}} · ¥{{item.price}}
+          <text class="days-badge {{item.daysLeft <= 2 ? 'urgent' : ''}}">{{item.daysLeft}}天后</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 最近商单 -->
+  <view class="card" wx:if="{{recentOrders.length > 0}}">
+    <view class="card-title flex-between">
+      <text>最近商单</text>
+      <text class="card-more text-gray" bindtap="goToStats">统计 ></text>
+    </view>
+    <view class="recent-list">
+      <view class="recent-item" wx:for="{{recentOrders}}" wx:key="id" data-id="{{item.id}}" bindtap="goToDetail">
+        <view class="recent-top">
+          <text class="recent-brand">{{item.brandName}}</text>
+          <text class="recent-price">¥{{item.price}}</text>
+        </view>
+        <view class="recent-bottom">
+          <text class="text-gray">{{item.productName || '-'}}</text>
+          <view class="tag {{item.progressInfo.cls}}">{{item.progressInfo.label}}</view>
+        </view>
+        <view class="recent-profit" wx:if="{{item.profit.netProfit}}">
+          净利润：<text class="text-money">¥{{item.profit.netProfit}}</text>
+          <text class="text-gray" style="margin-left:12rpx;font-size:22rpx">({{item.profit.profitRate}}%)</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{recentOrders.length === 0 && monthOrderCount === 0}}">
+    <view class="empty-icon">📋</view>
+    <view class="empty-text">还没有商单记录</view>
+    <view class="empty-sub">填写上方表单创建第一笔商单</view>
+  </view>
+
+  <view style="height:40rpx"></view>
+</view>
