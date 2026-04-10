@@ -1771,10 +1771,9 @@ const PageRenderers={
       </div>
       <!-- PR 联系方式 -->
       <div style="margin-top:8px;padding-top:10px;border-top:1px dashed #eee;">
-        <div class="form-row three-col">
-          <div class="form-group col-sm"><div class="form-label" style="font-size:12px;color:var(--text-blue);">📞 PR 姓名</div><input class="form-input" id="h_prContactName" placeholder="对接人（选填）"/></div>
-          <div class="form-group col-sm"><div class="form-label" style="font-size:12px;">微信号</div><input class="form-input" id="h_prContactWx" placeholder="选填"/></div>
-          <div class="form-group col-sm"><div class="form-label" style="font-size:12px;">手机号</div><input class="form-input" type="tel" id="h_prContactPhone" placeholder="选填"/></div>
+        <div class="form-row two-col">
+          <div class="form-group col"><div class="form-label" style="font-size:12px;color:var(--text-blue);">📞 PR 姓名</div><input class="form-input" id="h_prContactName" placeholder="对接人（选填）"/></div>
+          <div class="form-group col"><div class="form-label" style="font-size:12px;">微信号</div><input class="form-input" id="h_prContactWx" placeholder="选填"/></div>
         </div>
       </div>
     </div>
@@ -1845,12 +1844,12 @@ const PageRenderers={
     UI.setNav(isEdit?'编辑商单':'新建商单','',true);
 
     const brands=Storage.getBrands();
-    let form={brandName:'',productName:'',prContactName:'',prContactWx:'',prContactPhone:'',scheduleDate:'',outlineDate:'',draftDate:'',price:'',onlineRebateRate:'',offlineRebateRate:'',potatoCost:'',laborCost:'',progress:'scheduled',contentType:'single',competitionRange:'',notes:''};
+    let form={brandName:'',productName:'',prContactName:'',prContactWx:'',scheduleDate:'',outlineDate:'',draftDate:'',price:'',onlineRebateRate:'',offlineRebateRate:'',potatoCost:'',laborCost:'',progress:'scheduled',contentType:'single',competitionRange:'',notes:''};
 
     if(isEdit){
       const order=Storage.getOrderById(orderId);
       if(order){
-        form={brandName:order.brandName||'',productName:order.productName||'',prContactName:order.prContactName||'',prContactWx:order.prContactWx||'',prContactPhone:order.prContactPhone||'',scheduleDate:order.scheduleDate||'',outlineDate:order.outlineDate||'',draftDate:order.draftDate||'',price:String(order.price||''),onlineRebateRate:String(order.onlineRebateRate||''),offlineRebateRate:String(order.offlineRebateRate||''),potatoCost:String(order.potatoCost||''),laborCost:String(order.laborCost||''),progress:order.progress||'scheduled',contentType:order.contentType||'single',competitionRange:order.competitionRange||'',notes:order.notes||''};
+        form={brandName:order.brandName||'',productName:order.productName||'',prContactName:order.prContactName||'',prContactWx:order.prContactWx||'',scheduleDate:order.scheduleDate||'',outlineDate:order.outlineDate||'',draftDate:order.draftDate||'',price:String(order.price||''),onlineRebateRate:String(order.onlineRebateRate||''),offlineRebateRate:String(order.offlineRebateRate||''),potatoCost:String(order.potatoCost||''),laborCost:String(order.laborCost||''),progress:order.progress||'scheduled',contentType:order.contentType||'single',competitionRange:order.competitionRange||'',notes:order.notes||''};
         OrderAddActions._originalOrder=order;
         OrderAddActions._orderId=orderId;
       }
@@ -1878,10 +1877,9 @@ const PageRenderers={
     <div class="form-group"><div class="form-label">内容形式</div><select class="picker-select" id="a_contentType">${CONTENT_TYPES.map((c,i)=>`<option value="${c.value}"${i===ctIdx?' selected':''}>${c.label}</option>`).join('')}</select></div>
     <div style="margin-top:10px;padding-top:12px;border-top:1px dashed #eee;">
       <div class="form-label" style="margin-bottom:8px;font-size:13px;color:var(--text-blue);">📞 品牌 PR 联系方式（自动存入品牌库）</div>
-      <div class="form-group"><div class="form-label">PR 姓名</div><input class="form-input" id="a_prContactName" placeholder="对接人姓名（选填）" value="${Utils.escapeHtml(form.prContactName)}"/></div>
       <div class="form-row two-col">
+        <div class="form-group col"><div class="form-label">PR 姓名</div><input class="form-input" id="a_prContactName" placeholder="对接人姓名（选填）" value="${Utils.escapeHtml(form.prContactName)}"/></div>
         <div class="form-group col"><div class="form-label">微信号</div><input class="form-input" id="a_prContactWx" placeholder="微信号（选填）" value="${Utils.escapeHtml(form.prContactWx)}"/></div>
-        <div class="form-group col"><div class="form-label">手机号</div><input class="form-input" type="tel" id="a_prContactPhone" placeholder="手机号（选填）" value="${Utils.escapeHtml(form.prContactPhone)}"/></div>
       </div>
     </div>
     </div>
@@ -1983,10 +1981,9 @@ const PageRenderers={
     </div></div>`:''}
 
     <!-- PR 联系方式 -->
-    ${(order.prContactName||order.prContactWx||order.prContactPhone)?`<div class="section-card"><div class="section-title">📞 品牌 PR 联系方式</div><div class="info-list">
+    ${(order.prContactName||order.prContactWx)?`<div class="section-card"><div class="section-title">📞 品牌 PR 联系方式</div><div class="info-list">
     ${order.prContactName?`<div class="info-row"><span class="info-label">PR 姓名</span><span class="info-val">${Utils.escapeHtml(order.prContactName)}</span></div>`:''}
     ${order.prContactWx?`<div class="info-row"><span class="info-label">微信号</span><span class="info-val highlight-blue">${Utils.escapeHtml(order.prContactWx)}</span></div>`:''}
-    ${order.prContactPhone?`<div class="info-row"><span class="info-label">手机号</span><span class="info-val"><a href="tel:${Utils.escapeHtml(order.prContactPhone)}" style="color:var(--primary);text-decoration:none;">${Utils.escapeHtml(order.prContactPhone)}</a></span></div>`:''}
     </div></div>`:''}
 
     <!-- 推进进度 -->
@@ -2279,7 +2276,6 @@ const HomeActions={
       productName:(document.getElementById('h_productName').value||'').trim(),
       prContactName:(document.getElementById('h_prContactName').value||'').trim(),
       prContactWx:(document.getElementById('h_prContactWx').value||'').trim(),
-      prContactPhone:(document.getElementById('h_prContactPhone').value||'').trim(),
       scheduleDate:document.getElementById('h_scheduleDate').value||'',
       outlineDate:document.getElementById('h_outlineDate').value||'',
       draftDate:document.getElementById('h_draftDate').value||'',
@@ -2380,7 +2376,6 @@ const OrderAddActions={
         productName:(document.getElementById('a_productName').value||'').trim(),
         prContactName:(document.getElementById('a_prContactName').value||'').trim(),
         prContactWx:(document.getElementById('a_prContactWx').value||'').trim(),
-        prContactPhone:(document.getElementById('a_prContactPhone').value||'').trim(),
         scheduleDate:document.getElementById('a_scheduleDate').value||'',
         outlineDate:document.getElementById('a_outlineDate').value||'',
         draftDate:document.getElementById('a_draftDate').value||'',
@@ -2408,7 +2403,6 @@ const OrderAddActions={
         productName:(document.getElementById('a_productName').value||'').trim(),
         prContactName:(document.getElementById('a_prContactName').value||'').trim(),
         prContactWx:(document.getElementById('a_prContactWx').value||'').trim(),
-        prContactPhone:(document.getElementById('a_prContactPhone').value||'').trim(),
         scheduleDate:document.getElementById('a_scheduleDate').value||'',
         outlineDate:document.getElementById('a_outlineDate').value||'',
         draftDate:document.getElementById('a_draftDate').value||'',
@@ -2852,7 +2846,7 @@ const BrandListActions={
       <div class="brand-avatar"><span class="avatar-text">${b.initial}</span></div>
       <div class="brand-info-page"><div class="brand-name-row"><span class="brand-name-page">${Utils.escapeHtml(b.name)}</span>${b.industry?`<span class="brand-industry">${Utils.escapeHtml(b.industry)}</span>`:''}</div>
       ${b.contactName?`<div class="contact-info-b"><span class="contact-icon-b">👤</span><span class="contact-name-b">${Utils.escapeHtml(b.contactName)}</span></div>`:''}
-      ${b.contactPhone?`<div class="contact-info-b"><span class="contact-icon-b">📱</span><span class="contact-phone-b">${Utils.escapeHtml(b.contactPhone)}</span></div>`:''}
+      ${b.contactWx?`<div class="contact-info-b"><span class="contact-icon-b">📧</span><span class="contact-name-b">${Utils.escapeHtml(b.contactWx)}</span></div>`:''}
       <div class="brand-stats-b"><span class="stat-text-b">共 ${b.orderCount} 单</span><span class="stat-sep-b">·</span><span class="text-money stat-text-b">¥${b.totalRevenueText}</span></div></div>
       <div class="brand-action"><span class="more-icon-b">›</span></div>
     </div>`).join(''):`<div class="empty-state"><div class="empty-icon">🏢</div><div class="empty-text">${this._keyword?'未找到匹配结果':'还没有品牌联系方式'}</div><div class="empty-sub"${this._keyword?'':' style=""'}>${this._keyword?'':'点击「+添加」录入品牌信息'}</div></div>`}
