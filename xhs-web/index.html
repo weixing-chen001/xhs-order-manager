@@ -2249,7 +2249,7 @@ const PageRenderers={
     </div>
 
     <div class="section-card"><div class="section-title">💼 合作信息</div>
-    <div class="form-group"><div class="form-label">返点政策</div><input class="form-input" id="b_rebatePolicy" placeholder="如：线下返点 30%（从商单自动同步）" value="${Utils.escapeHtml(form.rebatePolicy||'')}"/></div>
+    <div class="form-group"><div class="form-label">返点政策</div><div style="padding:10px 14px;background:#FAFAFA;border-radius:8px;font-size:14px;color:var(--text-secondary);min-height:22px">${form.rebatePolicy?'<span style="color:var(--text-orange);font-weight:500">'+Utils.escapeHtml(form.rebatePolicy)+'</span>':'<span style="color:#CCC">暂无数据（从商单自动同步）</span>'}</div></div>
     <div class="form-group"><div class="form-label">合作历史备注</div><textarea class="form-textarea" id="b_cooperationHistory" placeholder="过往合作记录、注意事项等...">${Utils.escapeHtml(form.cooperationHistory||'')}</textarea></div></div>
 
     ${isEdit?`<div class="action-area-b"><button class="btn-save-b" onclick="BrandDetailActions.save()">${isEdit?'保存修改':'添加品牌'}</button><button class="btn-delete-b" onclick="BrandDetailActions.del()">删除品牌</button></div>`:`<div class="action-area-b"><button class="btn-save-b" onclick="BrandDetailActions.save()">添加品牌</button></div>`}
@@ -2886,7 +2886,6 @@ const BrandDetailActions={
       contactName:(document.getElementById('b_contactName').value||'').trim(),
       contactTitle:(document.getElementById('b_contactTitle').value||'').trim(),
       contactWx:(document.getElementById('b_contactWx').value||'').trim(),
-      rebatePolicy:(document.getElementById('b_rebatePolicy').value||'').trim(),
       cooperationHistory:(document.getElementById('b_cooperationHistory').value||'').trim(),
       updateTime:Utils.today()
     };
