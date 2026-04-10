@@ -1186,9 +1186,37 @@ const Storage = {
       });
       if(migrated.length>0) console.log('[MIGRATE] Imported:',migrated.join(', '));
     }catch(e){}
+  },
+  // 一次性迁移：将现有商单的返点信息补到品牌库
+  migrateRebateToBrands(){
+    try{
+      if(localStorage.getItem(this._k('rebate_migrated'))) return; // 已迁移过则跳过
+      const orders=this.getOrders();
+      const brands=this.getBrands();
+      let updated=false;
+      orders.forEach(o=>{
+        const oR=parseFloat(o.onlineRebateRate)||0;
+        const offR=parseFloat(o.offlineRebateRate)||0;
+        if(!o.brandName || (!oR && !offR)) return;
+        let rebateDesc='';
+        if(oR>0 && offR>0) rebateDesc=`线上返点 ${oR}%、线下返点 ${offR}%`;
+        else if(oR>0) rebateDesc=`线上返点 ${oR}%`;
+        else if(offR>0) rebateDesc=`线下返点 ${offR}%`;
+        if(!rebateDesc) return;
+        const brand=brands.find(b=>b.name===o.brandName||b.id===o.brandId);
+        if(brand && !brand.rebatePolicy){
+          brand.rebatePolicy=rebateDesc;
+          this.saveBrand(brand);
+          updated=true;
+        }
+      });
+      localStorage.setItem(this._k('rebate_migrated'),'1');
+      if(updated) console.log('[MIGRATE] Rebate synced to brands');
+    }catch(e){}
   }
 };
 Storage.migrateOldData();
+Storage.migrateRebateToBrands();
 
 // ===== SECTION 3.5: 用户行为数据采集（匿名聚合） =====
 const Tracker = {
