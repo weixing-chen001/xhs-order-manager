@@ -1,0 +1,1 @@
+{"name": "shangdan-guanjia", "version": "3.1.0", "description": "商单管家 - 小红书博主专用商单管理工具", "private": true, "scripts": {"dev": "npx serve . -l 3000", "start": "npx serve . -l 3000"}, "keywords": ["xiaohongshu", "kols", "order-management", "sponsorship"], "author": "", "license": "MIT"}

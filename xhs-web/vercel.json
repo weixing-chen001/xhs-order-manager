@@ -1,0 +1,1 @@
+{"version": 2, "name": "shangdan-guanjia", "builds": [{"src": "**/*", "use": "@vercel/static"}], "routes": [{"src": "/api/track", "dest": "/api/track.js"}, {"src": "/(.*)", "dest": "/index.html"}]}

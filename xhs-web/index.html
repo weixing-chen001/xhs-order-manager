@@ -1366,8 +1366,7 @@ const Tracker = {
         console.table(batch.map(b=>({event:b.e,time:new Date(b.t).toLocaleTimeString(),data:JSON.stringify(b.d)})));
       }
       
-      // ===== 真实上报时取消注释以下代码 =====
-      /*
+      // ===== 真实上报 =====
       const payload = JSON.stringify({
         v: '1.0',
         ts: Date.now(),
@@ -1388,7 +1387,6 @@ const Tracker = {
           keepalive: true
         }).catch(()=>{}); // 静默失败
       }
-      */
     } catch(e){/* 静默 */}
 
     // 清理过期本地缓存（保留最近7天）
