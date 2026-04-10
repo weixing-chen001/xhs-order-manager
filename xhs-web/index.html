@@ -2249,7 +2249,7 @@ const PageRenderers={
     </div>
 
     <div class="section-card"><div class="section-title">💼 合作信息</div>
-    <div class="form-group"><div class="form-label">返点政策</div><input class="form-input" id="b_rebatePolicy" placeholder="如：按合同约定10%返点（从商单自动同步）" value="${Utils.escapeHtml(form.rebatePolicy||'')}"/></div>
+    <div class="form-group"><div class="form-label">返点政策</div><input class="form-input" id="b_rebatePolicy" placeholder="如：线下返点 30%（从商单自动同步）" value="${Utils.escapeHtml(form.rebatePolicy||'')}"/></div>
     <div class="form-group"><div class="form-label">合作历史备注</div><textarea class="form-textarea" id="b_cooperationHistory" placeholder="过往合作记录、注意事项等...">${Utils.escapeHtml(form.cooperationHistory||'')}</textarea></div></div>
 
     ${isEdit?`<div class="action-area-b"><button class="btn-save-b" onclick="BrandDetailActions.save()">${isEdit?'保存修改':'添加品牌'}</button><button class="btn-delete-b" onclick="BrandDetailActions.del()">删除品牌</button></div>`:`<div class="action-area-b"><button class="btn-save-b" onclick="BrandDetailActions.save()">添加品牌</button></div>`}
@@ -2323,16 +2323,16 @@ const OrderAddActions={
   },
   // 将PR联系方式自动同步到品牌库
   _syncPrToBrand(brandName, orderData){
-    // 构建返点政策描述
+    // 构建返点政策描述（与商单展示格式一致）
     const oR=parseFloat(orderData.onlineRebateRate)||0;
     const offR=parseFloat(orderData.offlineRebateRate)||0;
-    const price=parseFloat(orderData.price)||0;
     let rebateDesc='';
-    if(oR>0 || offR>0){
-      const parts=[];
-      if(oR>0) parts.push(`线上${oR}%`);
-      if(offR>0) parts.push(`线下${offR}%`);
-      rebateDesc=parts.join(' + ')+' 返点';
+    if(oR>0 && offR>0){
+      rebateDesc=`线上返点 ${oR}%、线下返点 ${offR}%`;
+    }else if(oR>0){
+      rebateDesc=`线上返点 ${oR}%`;
+    }else if(offR>0){
+      rebateDesc=`线下返点 ${offR}%`;
     }
     
     if(!brandName || (!orderData.prContactName && !orderData.prContactWx && !rebateDesc)) return; 
