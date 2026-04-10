@@ -575,6 +575,40 @@ a{text-decoration:none;color:inherit;}
 .copy-inline{background:#f5f5f5;color:var(--text-secondary);border-radius:6px;padding:0 14px;height:44px;line-height:44px;font-size:12px;flex-shrink:0;cursor:pointer;}
 .call-inline{background:#e6f7ff;color:var(--text-blue);border-radius:6px;padding:0 14px;height:44px;line-height:44px;font-size:12px;flex-shrink:0;cursor:pointer;font-weight:600;}
 
+/* ===== 商单对账单 ===== */
+.recon-page{padding:0;}
+.recon-toolbar{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--white);border-bottom:1px solid var(--border);position:sticky;top:48px;z-index:10;}
+.recon-month-select{flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;color:var(--text-primary);background:#fff;}
+.recon-export-btn{white-space:nowrap;padding:8px 16px;background:var(--primary);color:#fff;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:none;}
+.recon-summary{display:flex;gap:0;margin:14px 14px 0;}
+.recon-sum-card{flex:1;background:var(--white);border-radius:var(--radius-lg);padding:14px;text-align:center;box-shadow:var(--shadow-sm);}
+.recon-sum-label{font-size:11px;color:var(--text-muted);margin-bottom:4px;}
+.recon-sum-val{font-size:18px;font-weight:700;color:var(--text-primary);}
+.recon-sum-val.money{color:var(--primary);}
+.recon-sum-val.profit{color:var(--text-green);}
+.recon-table-wrap{margin:14px;background:var(--white);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-sm);}
+.recon-table{width:100%;border-collapse:collapse;font-size:13px;}
+.recon-table thead{background:#FAFAFA;}
+.recon-table th{padding:10px 8px;text-align:left;font-size:12px;color:var(--text-muted);font-weight:600;white-space:nowrap;border-bottom:2px solid #EEE;}
+.recon-table td{padding:10px 8px;border-bottom:1px solid #F5F5F5;vertical-align:middle;color:var(--text-secondary);}
+.recon-table tr:last-child td{border-bottom:none;}
+.recon-table tr:hover td{background:#FAFDFF;}
+.recon-brand-cell{font-weight:600;color:var(--text-primary);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.recon-price-cell{font-weight:600;color:var(--primary);white-space:nowrap;}
+.recon-profit-cell{font-weight:600;color:var(--text-green);white-space:nowrap;}
+.recon-rebate-cell{font-size:11px;color:var(--text-orange);white-space:nowrap;}
+.recon-cost-cell{font-size:11px;color:var(--text-red);white-space:nowrap;}
+.recon-status-tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:500;}
+.recon-tfoot td{background:#FAFAFA;font-weight:700;color:var(--text-primary);padding:12px 8px;border-top:2px solid #EEE;}
+@media(min-width:768px){
+  .recon-page{padding:0 32px;}
+  .recon-toolbar{top:56px;}
+  .recon-table th,.recon-table td{padding:12px 14px;}
+  .recon-brand-cell{max-width:200px;}
+}
+.recon-empty{text-align:center;padding:60px 20px;color:var(--text-muted);}
+.recon-empty-icon{font-size:48px;margin-bottom:10px;}
+
 .order-item-b{padding:12px 0;border-bottom:1px solid #f5f5f5;cursor:pointer;}
 .order-item-b:last-child{border-bottom:none;}
 .order-row-b{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
@@ -2240,6 +2274,12 @@ const PageRenderers={
     RebateActions.load();
   },
 
+  // ==================== 商单对账单 ====================
+  reconciliation(){
+    UI.setNav('商单对账单','',true);
+    ReconciliationActions.load();
+  },
+
   // ==================== 品牌列表 ====================
   brands(){
     UI.setNav('品牌库','',true,'<div class="add-btn" onclick="Router.navigate(\'brandDetail\')">+添加</div>');
@@ -2649,6 +2689,13 @@ const StatsActions={period:'month',load(){
       ${stats.abnormalCount>0?`<div class="metric-card warn"><span class="metric-label">⚠️ 异常商单</span><span class="metric-val warn-num">${stats.abnormalCount}单</span></div>`:''}
     </div>
 
+    <!-- 对账单入口 -->
+    <div class="section-card" style="background:linear-gradient(135deg,#FFF7E6,#FFFBF0);cursor:pointer" onclick="Router.navigate('reconciliation')">
+      <div class="section-title">🧾 商单对账单</div>
+      <div class="text-gray" style="font-size:13px;margin-top:4px">按月查看所有商单的报价、返点、成本、净利润汇总表格，支持导出 CSV</div>
+      <div style="margin-top:10px;text-align:right"><span style="font-size:13px;color:var(--text-orange);font-weight:500">查看对账表 →</span></div>
+    </div>
+
     <!-- 公式说明 -->
     <div class="section-card formula-card"><div class="section-title">🧮 利润公式说明</div><div class="formula-list">
       <div class="formula-item"><span class="f-name">净利润</span><span class="f-formula">= 报价 - 线上返点 - 线下返点 - 薯条成本 - 女工成本</span></div>
@@ -2846,6 +2893,135 @@ const RebateActions={
     UI.closeModal();
     UI.toast(isEdit?'已更新':'已记录');
     RebateActions.load();
+  }
+};
+
+// --- 商单对账单操作 ---
+const ReconciliationActions={
+  _month:'',
+  _orders:[],
+  load(){
+    const now=new Date();
+    this._month=Router.pageParams.month||`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    this.render();
+  },
+  changeMonth(){
+    this._month=document.getElementById('recon_month').value;
+    this.render();
+  },
+  render(){
+    const orders=Storage.getOrders().map(o=>({...o,profit:Utils.calcProfit(o),progressInfo:Utils.getProgressInfo(o.progress)}));
+    // 按月份过滤（按排期日期或创建时间）
+    let filtered=orders.filter(o=>{
+      if(!this._month) return true;
+      return (o.scheduleDate||'').startsWith(this._month)||(o.createTime||'').startsWith(this._month);
+    });
+    filtered.sort((a,b)=>(a.scheduleDate||a.createTime||'').localeCompare(b.scheduleDate||b.createTime||''));
+
+    this._orders=filtered;
+
+    // 汇总数据
+    const totalRevenue=filtered.reduce((s,o)=>s+(parseFloat(o.price)||0),0);
+    const totalOnlineRebate=filtered.reduce((s,o)=>s+(o.profit.onlineRebateAmount||0),0);
+    const totalOfflineRebate=filtered.reduce((s,o)=>{
+      const offR=parseFloat(o.offlineRebateRate)||0;
+      return s+(parseFloat(o.price)||0)*(offR/100);
+    },0);
+    const totalPotatoCost=filtered.reduce((s,o)=>s+(parseFloat(o.potatoCost)||0),0);
+    const totalLaborCost=filtered.reduce((s,o)=>s+(parseFloat(o.laborCost)||0),0);
+    const totalNetProfit=filtered.filter(o=>Utils.isValidForProfit(o)).reduce((s,o)=>s+(o.profit.netProfit||0),0);
+
+    // 生成月选项
+    const months=this._getMonthOptions(orders);
+    const monthOpts=months.map(m=>`<option value="${m}"${m===this._month?' selected':''}>${m}</option>`).join('');
+
+    let html=`<div class="page active recon-page">
+    <div class="recon-toolbar">
+      <select class="recon-month-select" id="recon_month" onchange="ReconciliationActions.changeMonth()">${monthOpts}</select>
+      <button class="recon-export-btn" onclick="ReconciliationActions.exportCSV()">📥 导出</button>
+    </div>
+    <div class="recon-summary">
+      <div class="recon-sum-card"><div class="recon-sum-label">商单数</div><div class="recon-sum-val">${filtered.length}</div></div>
+      <div class="recon-sum-card"><div class="recon-sum-label">总收入</div><div class="recon-sum-val money">¥${Utils.formatMoney(totalRevenue)}</div></div>
+      <div class="recon-sum-card"><div class="recon-sum-label">返点合计</div><div class="recon-sum-val" style="color:var(--text-orange)">¥${Utils.formatMoney(totalOnlineRebate+totalOfflineRebate)}</div></div>
+      <div class="recon-sum-card"><div class="recon-sum-label">净利润</div><div class="recon-sum-val profit">¥${Utils.formatMoney(totalNetProfit)}</div></div>
+    </div>
+    <div class="recon-table-wrap"><table class="recon-table">
+    <thead><tr>
+      <th>品牌</th><th>产品</th><th>档期</th><th>报价</th>
+      <th>线上返点</th><th>线下返点</th><th>薯条</th><th>女工</th>
+      <th>净利润</th><th>状态</th>
+    </tr></thead><tbody>`;
+
+    if(filtered.length>0){
+      filtered.forEach(o=>{
+        const oR=parseFloat(o.onlineRebateRate)||0;
+        const offR=parseFloat(o.offlineRebateRate)||0;
+        const p=parseFloat(o.price)||0;
+        const oRA=Math.round(p*oR/100);
+        const offRA=Math.round(p*offR/100);
+        const potatoC=parseFloat(o.potatoCost)||0;
+        const laborC=parseFloat(o.laborCost)||0;
+        html+=`<tr onclick="Router.navigate('orderDetail',{id:\'${o.id}'})">
+          <td title="${Utils.escapeHtml(o.brandName)}" class="recon-brand-cell">${Utils.escapeHtml(o.brandName)}</td>
+          <td>${Utils.escapeHtml(o.productName)||'-'}</td>
+          <td>${o.scheduleDate?Utils.formatDate(o.scheduleDate):'-'}</td>
+          <td class="recon-price-cell">¥${p.toLocaleString()}</td>`;
+          html+=oR>0?`<td class="recon-rebate-cell">${oR}% (¥${oRA})</td>`:`<td>-</td>`;
+          html+=offR>0?`<td class="recon-rebate-cell">${offR}% (¥${offRA})</td>`:`<td>-</td>`;
+          html+=potatoC>0?`<td class="recon-cost-cell">-¥${potatoC}</td>`:`<td>-</td>`;
+          html+=laborC>0?`<td class="recon-cost-cell">-¥${laborC}</td>`:`<td>-</td>`;
+          html+=`<td class="recon-profit-cell">${Utils.isValidForProfit(o)?'¥'+Utils.formatMoney(o.profit.netProfit):'-'}</td>
+          <td><span class="recon-status-tag ${o.progressInfo.cls}">${o.progressInfo.label}</span></td></tr>`;
+      });
+      // 合计行
+      html+=`<tfoot><tr>
+        <td colspan="3">合计 (${filtered.length} 单)</td>
+        <td class="recon-price-cell">¥${Utils.formatMoney(totalRevenue)}</td>
+        <td style="color:var(--text-orange)">¥${Utils.formatMoney(totalOnlineRebate)}</td>
+        <td style="color:var(--text-orange)">¥${Utils.formatMoney(totalOfflineRebate)}</td>
+        <td style="color:var(--text-red)">¥${Utils.formatMoney(totalPotatoCost)}</td>
+        <td style="color:var(--text-red)">¥${Utils.formatMoney(totalLaborCost)}</td>
+        <td class="recon-profit-cell">¥${Utils.formatMoney(totalNetProfit)}</td>
+        <td></td>
+      </tr></tfoot>`;
+    }else{
+      html+=`</tbody></table><div class="recon-empty"><div class="recon-empty-icon">📋</div><div>该月份暂无商单数据</div></div>`;
+    }
+
+    html+=`</table></div></div>`;
+    document.getElementById('pageContent').innerHTML=html;
+  },
+  _getMonthOptions(orders){
+    const set=new Set();
+    orders.forEach(o=>{
+      const d=(o.scheduleDate||o.createTime||'').slice(0,7);
+      if(d)set.add(d);
+    });
+    return Array.from(set).sort().reverse();
+  },
+  exportCSV(){
+    const esc=s=>`"${(s||'-').toString().replace(/"/g,'""')}"`;
+    const rows=[['品牌','产品','档期','报价','线上返点率','线上返点金额','线下返点率','线下返点金额','薯条成本','女工成本','净利润','状态']];
+    this._orders.forEach(o=>{
+      const oR=parseFloat(o.onlineRebateRate)||0;
+      const offR=parseFloat(o.offlineRebateRate)||0;
+      const p=parseFloat(o.price)||0;
+      rows.push([
+        esc(o.brandName),esc(o.productName)||'-',o.scheduleDate||'-',
+        p,oR+'%',Math.round(p*oR/100),
+        offR+'%',Math.round(p*offR/100),
+        parseFloat(o.potatoCost)||0,
+        parseFloat(o.laborCost)||0,
+        Utils.isValidForProfit(o)?o.profit.netProfit:'-',
+        Utils.getProgressInfo(o.progress).label
+      ]);
+    });
+    const csv='\uFEFF'+rows.map(r=>r.join(',')).join('\n');
+    const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=`商单对账单_${this._month}.csv`;a.click();URL.revokeObjectURL(url);
+    UI.toast('已导出对账单');
   }
 };
 
