@@ -1975,7 +1975,7 @@ const PageRenderers={
     </div></div>`:''}
 
     <!-- 商单信息 -->
-    ${(ctInfo||crInfo||order.prContactName||order.prContactWx||order.prContactPhone)?`<div class="section-card"><div class="section-title">📋 商单信息</div><div class="info-list">
+    ${(ctInfo||crInfo||order.prContactName||order.prContactWx)?`<div class="section-card"><div class="section-title">📋 商单信息</div><div class="info-list">
     ${ctInfo?`<div class="info-row"><span class="info-label">内容形式</span><span class="info-val">${ctInfo.label}</span></div>`:''}
     ${crInfo?`<div class="info-row"><span class="info-label">排竞管理</span><span class="info-val highlight-blue">${crInfo.label}</span></div>`:''}
     </div></div>`:''}
@@ -2224,7 +2224,7 @@ const PageRenderers={
     const bid=Router.pageParams.id;
     UI.setNav(isEdit?'编辑品牌':'添加品牌','',true);
 
-    let form={name:'',industry:'',website:'',notes:'',contactName:'',contactTitle:'',contactWx:'',contactPhone:'',contactEmail:'',rebatePolicy:'',defaultRebateRate:'',cooperationHistory:''};
+    let form={name:'',industry:'',notes:'',contactName:'',contactTitle:'',contactWx:'',rebatePolicy:'',cooperationHistory:''};
 
     if(isEdit){
       const b=Storage.getBrandById(bid);
@@ -2240,19 +2240,16 @@ const PageRenderers={
     <div class="section-card"><div class="section-title">🏢 品牌信息</div>
     <div class="form-group"><div class="form-label required">品牌名称</div><input class="form-input" id="b_name" placeholder="品牌名称" value="${Utils.escapeHtml(form.name)}"/></div>
     <div class="form-group"><div class="form-label">所属行业</div><select class="picker-select" id="b_industry"><option value="">选择行业</option>${INDUSTRIES.map((ind,i)=>`<option value="${ind}"${i===indIdx?' selected':''}>${ind}</option>`).join('')}</select></div>
-    <div class="form-group"><div class="form-label">品牌官网</div><input class="form-input" id="b_website" placeholder="https://..." value="${Utils.escapeHtml(form.website||'')}"/></div>
     <div class="form-group"><div class="form-label">备注</div><textarea class="form-textarea" id="b_notes" placeholder="关于这个品牌的备注信息...">${Utils.escapeHtml(form.notes||'')}</textarea></div></div>
 
     <div class="section-card"><div class="section-title">👤 联系方式</div>
     <div class="form-group"><div class="form-label">联系人姓名</div><input class="form-input" id="b_contactName" placeholder="BD/对接人姓名" value="${Utils.escapeHtml(form.contactName||'')}"/></div>
     <div class="form-group"><div class="form-label">职位/角色</div><input class="form-input" id="b_contactTitle" placeholder="如：品牌BD、小红书负责人" value="${Utils.escapeHtml(form.contactTitle||'')}"/></div>
     <div class="form-group"><div class="form-label">微信号</div><div class="input-with-copy"><input class="form-input" id="b_contactWx" placeholder="微信号" value="${Utils.escapeHtml(form.contactWx||'')}"/><span class="copy-inline" onclick="navigator.clipboard.writeText(document.getElementById('b_contactWx').value);UI.toast('已复制')">复制</span></div></div>
-    <div class="form-group"><div class="form-label">手机号</div><div class="input-with-copy"><input class="form-input" type="tel" id="b_contactPhone" placeholder="手机号码" value="${Utils.escapeHtml(form.contactPhone||'')}"/><span class="call-inline" onclick="window.open('tel:'+document.getElementById('b_contactPhone').value)">拨打</span></div></div>
-    <div class="form-group"><div class="form-label">邮箱</div><input class="form-input" id="b_contactEmail" placeholder="邮箱地址" value="${Utils.escapeHtml(form.contactEmail||'')}"/></div></div>
+    </div>
 
     <div class="section-card"><div class="section-title">💼 合作信息</div>
-    <div class="form-group"><div class="form-label">返点政策</div><input class="form-input" id="b_rebatePolicy" placeholder="如：按合同约定10%返点" value="${Utils.escapeHtml(form.rebatePolicy||'')}"/></div>
-    <div class="form-group"><div class="form-label">常规返点率（%）</div><div class="input-suffix-wrap"><input class="form-input" type="number" id="b_defaultRebateRate" placeholder="如：10" value="${Utils.escapeHtml(String(form.defaultRebateRate||''))}"/><span class="input-suffix">%</span></div></div>
+    <div class="form-group"><div class="form-label">返点政策</div><input class="form-input" id="b_rebatePolicy" placeholder="如：按合同约定10%返点（从商单自动同步）" value="${Utils.escapeHtml(form.rebatePolicy||'')}"/></div>
     <div class="form-group"><div class="form-label">合作历史备注</div><textarea class="form-textarea" id="b_cooperationHistory" placeholder="过往合作记录、注意事项等...">${Utils.escapeHtml(form.cooperationHistory||'')}</textarea></div></div>
 
     ${isEdit?`<div class="action-area-b"><button class="btn-save-b" onclick="BrandDetailActions.save()">${isEdit?'保存修改':'添加品牌'}</button><button class="btn-delete-b" onclick="BrandDetailActions.del()">删除品牌</button></div>`:`<div class="action-area-b"><button class="btn-save-b" onclick="BrandDetailActions.save()">添加品牌</button></div>`}
@@ -2326,35 +2323,41 @@ const OrderAddActions={
   },
   // 将PR联系方式自动同步到品牌库
   _syncPrToBrand(brandName, orderData){
-    if(!brandName || (!orderData.prContactName && !orderData.prContactWx && !orderData.prContactPhone)) return; // 没有PR信息则不同步
+    // 构建返点政策描述
+    const oR=parseFloat(orderData.onlineRebateRate)||0;
+    const offR=parseFloat(orderData.offlineRebateRate)||0;
+    const price=parseFloat(orderData.price)||0;
+    let rebateDesc='';
+    if(oR>0 || offR>0){
+      const parts=[];
+      if(oR>0) parts.push(`线上${oR}%`);
+      if(offR>0) parts.push(`线下${offR}%`);
+      rebateDesc=parts.join(' + ')+' 返点';
+    }
+    
+    if(!brandName || (!orderData.prContactName && !orderData.prContactWx && !rebateDesc)) return; 
     const brands=Storage.getBrands();
     let brand=brands.find(b=>b.name===brandName);
     if(!brand){
-      // 品牌不存在，自动创建
       brand={
         id:Utils.genId(),
         name:brandName,
         industry:'',
-        website:'',
         notes:'从商单自动创建',
         contactName:orderData.prContactName||'',
         contactTitle:'PR',
         contactWx:orderData.prContactWx||'',
-        contactPhone:orderData.prContactPhone||'',
-        contactEmail:'',
-        rebatePolicy:'',
-        defaultRebateRate:'',
+        rebatePolicy:rebateDesc,
         cooperationHistory:'',
         createTime:Utils.today()
       };
       Storage.saveBrand(brand);
       Tracker.trackBrandAdd(brand.industry);
     }else{
-      // 品牌已存在，更新PR信息（只填有值的字段）
       let updated=false;
       if(orderData.prContactName && !brand.contactName){ brand.contactName=orderData.prContactName; updated=true; }
       if(orderData.prContactWx && !brand.contactWx){ brand.contactWx=orderData.prContactWx; updated=true; }
-      if(orderData.prContactPhone && !brand.contactPhone){ brand.contactPhone=orderData.prContactPhone; updated=true; }
+      if(rebateDesc && !brand.rebatePolicy){ brand.rebatePolicy=rebateDesc; updated=true; }
       if(updated){
         brand.updateTime=Utils.today();
         Storage.saveBrand(brand);
@@ -2847,7 +2850,7 @@ const BrandListActions={
       <div class="brand-info-page"><div class="brand-name-row"><span class="brand-name-page">${Utils.escapeHtml(b.name)}</span>${b.industry?`<span class="brand-industry">${Utils.escapeHtml(b.industry)}</span>`:''}</div>
       ${b.contactName?`<div class="contact-info-b"><span class="contact-icon-b">👤</span><span class="contact-name-b">${Utils.escapeHtml(b.contactName)}</span></div>`:''}
       ${b.contactWx?`<div class="contact-info-b"><span class="contact-icon-b">📧</span><span class="contact-name-b">${Utils.escapeHtml(b.contactWx)}</span></div>`:''}
-      <div class="brand-stats-b"><span class="stat-text-b">共 ${b.orderCount} 单</span><span class="stat-sep-b">·</span><span class="text-money stat-text-b">¥${b.totalRevenueText}</span></div></div>
+      ${b.rebatePolicy?`<div class="contact-info-b" style="color:var(--text-orange);font-size:11px;"><span class="contact-icon-b">💰</span><span class="contact-name-b">${Utils.escapeHtml(b.rebatePolicy)}</span></div>`:''}<div class="brand-stats-b"><span class="stat-text-b">共 ${b.orderCount} 单</span><span class="stat-sep-b">·</span><span class="text-money stat-text-b">¥${b.totalRevenueText}</span></div></div>
       <div class="brand-action"><span class="more-icon-b">›</span></div>
     </div>`).join(''):`<div class="empty-state"><div class="empty-icon">🏢</div><div class="empty-text">${this._keyword?'未找到匹配结果':'还没有品牌联系方式'}</div><div class="empty-sub"${this._keyword?'':' style=""'}>${this._keyword?'':'点击「+添加」录入品牌信息'}</div></div>`}
     </div>`;
@@ -2855,9 +2858,9 @@ const BrandListActions={
   },
   exportCSV(){
     const brands=Storage.getBrands();
-    let csv='\uFEFF品牌名称,所属行业,联系人,职位,微信号,手机号,邮箱,返点政策,合作备注\n';
+    let csv='\uFEFF品牌名称,所属行业,联系人,职位,微信号,返点政策,合作备注\n';
     const esc=s=>`"${(s||'-').toString().replace(/"/g,'""')}"`;
-    brands.forEach(b=>csv+=[esc(b.name),esc(b.industry),esc(b.contactName),esc(b.contactTitle),esc(b.contactWx),esc(b.contactPhone),esc(b.contactEmail),esc(b.rebatePolicy),esc(b.notes)].join(',')+'\n');
+    brands.forEach(b=>csv+=[esc(b.name),esc(b.industry),esc(b.contactName),esc(b.contactTitle),esc(b.contactWx),esc(b.rebatePolicy),esc(b.notes)].join(',')+'\n');
 
     const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
     const url=URL.createObjectURL(blob);
@@ -2879,15 +2882,11 @@ const BrandDetailActions={
       id:this._isEdit?this._bid:Utils.genId(),
       name:name,
       industry:document.getElementById('b_industry').value,
-      website:(document.getElementById('b_website').value||'').trim(),
       notes:(document.getElementById('b_notes').value||'').trim(),
       contactName:(document.getElementById('b_contactName').value||'').trim(),
       contactTitle:(document.getElementById('b_contactTitle').value||'').trim(),
       contactWx:(document.getElementById('b_contactWx').value||'').trim(),
-      contactPhone:(document.getElementById('b_contactPhone').value||'').trim(),
-      contactEmail:(document.getElementById('b_contactEmail').value||'').trim(),
       rebatePolicy:(document.getElementById('b_rebatePolicy').value||'').trim(),
-      defaultRebateRate:(document.getElementById('b_defaultRebateRate').value||''),
       cooperationHistory:(document.getElementById('b_cooperationHistory').value||'').trim(),
       updateTime:Utils.today()
     };
