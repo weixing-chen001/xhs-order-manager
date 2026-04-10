@@ -1075,6 +1075,24 @@ a{text-decoration:none;color:inherit;}
 <!-- 弹窗容器 -->
 <div id="modalContainer"></div>
 
+<!-- 隐藏管理面板：连续点击5次导航栏标题打开 -->
+<div class="auth-overlay" id="adminPanel" style="display:none;">
+  <div class="auth-box" style="max-width:420px;">
+    <div class="auth-header" style="background:linear-gradient(135deg,#667eea,#764ba2);">
+      <div class="auth-logo">📊</div>
+      <div class="auth-title">数据采集面板</div>
+      <div class="auth-sub">本地行为数据分析（仅开发者可见）</div>
+    </div>
+    <div class="auth-body" id="adminPanelBody">
+      <div style="text-align:center;padding:20px;color:#999;">加载中...</div>
+    </div>
+    <div style="padding:12px 22px 18px;display:flex;gap:10px;">
+      <button onclick="Tracker.exportAllData()" style="flex:1;height:40px;background:#667eea;color:#fff;border-radius:10px;font-size:14px;cursor:pointer;">📥 导出全部 JSON</button>
+      <button onclick="document.getElementById('adminPanel').style.display='none'" style="height:40px;padding:0 20px;background:#eee;color:#666;border-radius:10px;font-size:14px;cursor:pointer;">关闭</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ============================================================
 //  商单管家 Web v3.0 — 从零按小程序源码完整翻译
@@ -1172,6 +1190,284 @@ const Storage = {
 };
 Storage.migrateOldData();
 
+// ===== SECTION 3.5: 用户行为数据采集（匿名聚合） =====
+const Tracker = {
+  _id: '',
+  _queue: [],
+  _flushTimer: null,
+  FLUSH_INTERVAL: 30000, // 30秒批量上报一次
+  MAX_QUEUE: 20,
+
+  init(){
+    // 生成/恢复匿名用户ID（纯本地，不涉及个人信息）
+    let uid = localStorage.getItem('xhs_track_uid');
+    if(!uid){
+      uid = 'u_' + Date.now().toString(36) + Math.random().toString(36).substr(2,6);
+      localStorage.setItem('xhs_track_uid', uid);
+    }
+    this._id = uid;
+
+    // 记录会话信息
+    this._trackSession();
+    this._trackDevice();
+
+    // 定期批量上报
+    this._flushTimer = setInterval(()=>this.flush(), this.FLUSH_INTERVAL);
+    // 页面关闭前也尝试上报
+    window.addEventListener('beforeunload', ()=>this.flush(true));
+    // 页面可见性变化时记录
+    document.addEventListener('visibilitychange', ()=>{
+      if(document.hidden) this.track('page_hide');
+      else this.track('page_show');
+    });
+  },
+
+  // 核心追踪方法
+  track(event, data={}){
+    const entry = {
+      eid: Utils.genId().slice(0,12),       // 事件ID
+      uid: this._id,                         // 匿名用户ID
+      e: event,                              // 事件名
+      t: Date.now(),                         // 时间戳
+      p: location.hash || '/',               // 当前页面路径
+      d: data                                // 附加数据
+    };
+    this._queue.push(entry);
+    if(this._queue.length >= this.MAX_QUEUE) this.flush();
+  },
+
+  // 会话追踪
+  _trackSession(){
+    const key = 'xhs_track_session';
+    let sess = JSON.parse(localStorage.getItem(key)||'{}');
+    const today = Utils.today();
+    
+    if(sess.date !== today){
+      // 新的一天：累计天数+1
+      sess.days = (sess.days||0) + 1;
+      sess.date = today;
+    }
+    sess.sessions = (sess.sessions||0) + 1;
+    sess.lastVisit = new Date().toISOString();
+    sess.firstVisit = sess.firstVisit || new Date().toISOString();
+    localStorage.setItem(key, JSON.stringify(sess));
+
+    this.track('session_start', {
+      dayCount: sess.days,
+      sessionCount: sess.sessions,
+      isFirstDay: sess.days === 1
+    });
+  },
+
+  // 设备信息采集
+  _trackDevice(){
+    const ua = navigator.userAgent;
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(ua);
+    this.track('device_info', {
+      isMobile,
+      screenWidth: screen.width,
+      screenHeight: screen.height,
+      viewportW: window.innerWidth,
+      viewportH: window.innerHeight,
+      lang: navigator.language || '',
+      platform: navigator.platform || '',
+      // 浏览器类型（简化判断）
+      browser: (ua.includes('MicroMessenger')?'WeChat':
+                ua.includes('Alipay')?'Alipay':
+                ua.includes('Chrome')?'Chrome':
+                ua.includes('Safari')&&ua.includes('Mobile')?'Mobile Safari':
+                'Unknown')
+    }, true); // true = 立即标记为需要flush的高优先级事件
+  },
+
+  // ========== 业务事件快捷方法 ==========
+
+  // 商单相关
+  trackOrderCreate(orderData){
+    // 只记录脱敏后的聚合数据
+    this.track('order_create', {
+      hasBrandName: !!orderData.brandName,
+      industry: orderData.industry || '',           // 行业分类（已选）
+      priceBand: this._priceBand(orderData.price),  // 价格区间
+      contentType: orderData.contentType || '',     // 内容形式
+      competitionSet: !!orderData.competitionRange, // 是否设置了排竞
+      scheduleDateSet: !!orderData.scheduleDate,    // 是否设了档期
+      currentTotalOrders: (Storage.getOrders()||[]).length
+    });
+  },
+
+  trackOrderUpdate(fieldsChanged){
+    this.track('order_update', { fields: fieldsChanged.slice(0,10) }); // 只记录改了哪些字段
+  },
+
+  trackOrderDelete(){
+    this.track('order_delete', { remainingOrders: (Storage.getOrders()||[]).length });
+  },
+
+  trackOrderStatusChange(fromStatus, toStatus){
+    this.track('status_change', { from: fromStatus, to: toStatus });
+  },
+
+  // 品牌相关
+  trackBrandAdd(industry){
+    this.track('brand_add', {
+      industry: industry || '',
+      totalBrands: (Storage.getBrands()||[]).length
+    });
+  },
+
+  // 页面/功能使用
+  trackPageView(pageName){
+    this.track('page_view', { page: pageName });
+  },
+
+  trackTabSwitch(tabName){
+    this.track('tab_switch', { tab: tabName });
+  },
+
+  trackFeatureUse(feature, detail){
+    this.track('feature_use', { f: feature, d: detail || '' });
+  },
+
+  // 日历操作
+  trackCalendarAction(action, detail){
+    this.track('calendar_' + action, detail || {});
+  },
+
+  // 数据导出
+  trackExport(type){
+    this.track('export_data', { type });
+  },
+
+  // 工具函数：价格分档
+  _priceBand(price){
+    const p = parseFloat(price) || 0;
+    if(p <= 0) return 'none';
+    if(p < 1000) return '0-1k';
+    if(p < 3000) return '1k-3k';
+    if(p < 5000) return '3k-5k';
+    if(p < 10000) return '5k-10k';
+    return '10k+';
+  },
+
+  // ========== 上报逻辑 ==========
+
+  flush(sync=false){
+    if(this._queue.length === 0) return;
+    const batch = this._queue.splice(0); // 取出所有待发数据
+    try {
+      // 本地存储兜底：即使不上报也先存着
+      this._persistBatch(batch);
+
+      // TODO: 替换为真实的数据接收端点
+      // 当前版本：仅本地存储 + 控制台输出（开发调试用）
+      if(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'){
+        console.log('[Tracker] 📊 事件批次:', batch.length, '条');
+        console.table(batch.map(b=>({event:b.e,time:new Date(b.t).toLocaleTimeString(),data:JSON.stringify(b.d)})));
+      }
+      
+      // ===== 真实上报时取消注释以下代码 =====
+      /*
+      const payload = JSON.stringify({
+        v: '1.0',
+        ts: Date.now(),
+        events: batch.map(e=>({
+          e: e.e, t: e.t, p: e.p, d: e.d
+          // 注意：不发送 uid 到服务端，用服务端 cookie/session 关联
+        }))
+      });
+      
+      if(sync){
+        // 同步请求（用于 beforeunload）
+        navigator.sendBeacon('/api/track', payload);
+      } else {
+        fetch('/api/track', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: payload,
+          keepalive: true
+        }).catch(()=>{}); // 静默失败
+      }
+      */
+    } catch(e){/* 静默 */}
+
+    // 清理过期本地缓存（保留最近7天）
+    this._cleanupLocalCache();
+  },
+
+  // 持久化到本地（离线兜底）
+  _persistBatch(batch){
+    const key = 'xhs_track_batch_' + Utils.today();
+    let existing = [];
+    try{ existing = JSON.parse(localStorage.getItem(key)||'[]'); }catch(e){}
+    existing.push(...batch);
+    localStorage.setItem(key, JSON.stringify(existing));
+  },
+
+  // 清理7天前的缓存
+  _cleanupLocalCache(){
+    const keys = Object.keys(localStorage).filter(k=>k.startsWith('xhs_track_batch_'));
+    const cutoff = Date.now() - 7*24*3600*1000;
+    keys.forEach(k=>{
+      try{
+        const data = JSON.parse(localStorage.getItem(k)||'[]');
+        // 如果最旧的事件已经超过7天就删掉整个key
+        if(data.length>0 && data[0].t && data[0].t < cutoff){
+          localStorage.removeItem(k);
+        }
+      }catch(e){}
+    });
+  },
+
+  // 获取本地统计摘要（供开发者查看）
+  getLocalSummary(){
+    const keys = Object.keys(localStorage).filter(k=>k.startsWith('xhs_track_batch_'));
+    let totalEvents = 0;
+    const eventTypes = {};
+    keys.forEach(k=>{
+      try{
+        const data = JSON.parse(localStorage.getItem(k)||'[]');
+        totalEvents += data.length;
+        data.forEach(e=>{ eventTypes[e.e] = (eventTypes[e.e]||0)+1; });
+      }catch(e){}
+    });
+
+    const sess = JSON.parse(localStorage.getItem('xhs_track_session')||'{}');
+    return {
+      anonymousId: this._id.slice(0,8)+'...',
+      totalEventsTracked: totalEvents,
+      uniqueEventTypes: Object.keys(eventTypes).length,
+      eventBreakdown: eventTypes,
+      activeDays: sess.days || 1,
+      totalSessions: sess.sessions || 1,
+      firstVisit: sess.firstVisit ? sess.firstVisit.split('T')[0] : '-',
+      cachedDays: keys.length
+    };
+  },
+
+  // 导出全部本地采集数据（JSON下载）—— 用于你自己的分析
+  exportAllData(){
+    const keys = Object.keys(localStorage).filter(k=>k.startsWith('xhs_track_batch_'));
+    let allData = [];
+    keys.forEach(k=>{
+      try{
+        const data = JSON.parse(localStorage.getItem(k)||'[]');
+        allData = allData.concat(data);
+      }catch(e){}
+    });
+    allData.sort((a,b)=>a.t-b.t); // 按时间排序
+    
+    // 创建下载
+    const blob = new Blob([JSON.stringify(allData,null,2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `xhs_tracker_${Utils.today()}.json`;
+    a.click(); URL.revokeObjectURL(url);
+    UI.toast(`📊 已导出 ${allData.length} 条行为数据`);
+    this.track('admin_export', { count: allData.length });
+  }
+};
+
 // ===== SECTION 4: 路由系统 =====
 const Router={
   currentPage:'home',
@@ -1184,6 +1480,7 @@ const Router={
     document.querySelectorAll('.tab-item').forEach(el=>{
       el.addEventListener('click',()=>{
         const page=el.dataset.page;
+        Tracker.trackTabSwitch(page); // 追踪 Tab 切换
         this.navigate(page);
       });
     });
@@ -1233,6 +1530,7 @@ const Router={
     this.render();
   },
   render(){
+    Tracker.trackPageView(this.currentPage); // 追踪页面访问
     const renderer=PageRenderers[this.currentPage];
     if(renderer){renderer();}else{document.getElementById('pageContent').innerHTML='<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-text">页面不存在</div></div>';}
   }
@@ -1273,6 +1571,7 @@ const UI={
 
 // ===== SECTION 5.5: 日历商单内联编辑器 =====
 function _renderCalendarOrderEditor(order){
+  order._lastProgress = order.progress || ''; // 记录旧状态，用于追踪变更
   const profit=Utils.calcProfit(order);
   const ctIdx=CONTENT_TYPES.findIndex(c=>c.value===order.contentType);
   const crIdx=COMPETITION_RANGES.findIndex(r=>r.value===order.competitionRange);
@@ -1354,15 +1653,29 @@ function _saveCalEditor(orderId){
   order.progress=document.getElementById('ce_progress').value;
   order.notes=document.getElementById('ce_notes').value.trim();
   order.updateTime=Utils.today();
+  Tracker.trackOrderStatusChange(order._lastProgress||'', order.progress); // 追踪状态变更
   Storage.saveOrder(order);
   UI.toast('✅ 已保存');
   CalendarState.detailOrderId='';
   PageRenderers.calendar();
 }
 
+// 状态变更追踪（从弹窗调用）
+function _trackStatusChange(orderId){
+  const s = document.getElementById('statusSel').value;
+  const o = Storage.getOrderById(orderId);
+  if(o){
+    const oldStatus = o.progress;
+    o.progress = s; o.updateTime = Utils.today(); Storage.saveOrder(o);
+    Tracker.trackOrderStatusChange(oldStatus, s); // 追踪状态变更
+    UI.toast('状态已更新'); UI.closeModal(); Router.navigate('orderDetail',{id:o.id});
+  }
+}
+
 function _deleteFromCalEditor(orderId){
   UI.confirm('确认删除','确定删除该商单吗？此操作不可恢复。',()=>{
     Storage.deleteOrder(orderId);
+    Tracker.trackOrderDelete(); // 追踪删除
     UI.toast('已删除');
     CalendarState.detailOrderId='';
     PageRenderers.calendar();
@@ -1958,6 +2271,7 @@ const HomeActions={
       updateTime:Utils.today()
     };
     Storage.saveOrder(order);
+    Tracker.trackOrderCreate(order); // 追踪商单创建
     UI.toast('已创建');
     Router.navigate('home');
   },
@@ -2041,6 +2355,7 @@ const OrderAddActions={
         updateTime:Utils.today()
       };
       Storage.saveOrder(order);
+      Tracker.trackOrderCreate(order); // 追踪商单创建
       UI.toast('已保存');
       setTimeout(()=>Router.goBack(),800);
     }
@@ -2054,6 +2369,7 @@ const OrderDetailActions={
   del(){
     UI.confirm('确认删除','确定删除该商单吗？',()=>{
       Storage.deleteOrder(this._orderId);
+      Tracker.trackOrderDelete(); // 追踪删除
       UI.toast('已删除');
       setTimeout(()=>Router.goBack(),800);
     });
@@ -2065,7 +2381,7 @@ const OrderDetailActions={
     let options=PROGRESS_STATUS.map((s,i)=>`<option value="${s.value}"${i===curIdx?' selected':''}>${s.icon} ${s.label}</option>`).join('');
     UI.showModal(`<div class="modal-header"><span class="modal-title-b">修改推进状态</span><span class="modal-close-b" onclick="UI.closeModal()">✕</span></div>
       <select class="picker-select" id="statusSel" style="margin-bottom:16px;font-size:15px;font-weight:500;">${options}</select>
-      <div class="modal-btns"><div class="modal-btn cancel" onclick="UI.closeModal()">取消</div><div class="modal-btn confirm" onclick="const s=document.getElementById('statusSel').value;const o=Storage.getOrderById('${this._objectId||this._orderId}');if(o){o.progress=s;o.updateTime=Utils.today();Storage.saveOrder(o);UI.toast('状态已更新');UI.closeModal();Router.navigate('orderDetail',{id:o.id});}">保存</div></div>`);
+      <div class="modal-btns"><div class="modal-btn cancel" onclick="UI.closeModal()">取消</div><div class="modal-btn confirm" onclick="_trackStatusChange('${this._objectId||this._orderId}')">保存</div></div>`);
     // Fix: use closure correctly
     const oid=this._orderId;
     const confirmBtn=document.querySelector('#modalContainer .modal-btn.confirm');
@@ -2158,6 +2474,7 @@ CalendarActions={
     order.scheduleDate=newDate;
     order.updateTime=Utils.today();
     Storage.saveOrder(order);
+    Tracker.trackCalendarAction('drag_reschedule', { from: oldDate, to: newDate }); // 追踪拖拽改期
     UI.toast(`📅 档期：${oldDate} → ${newDate}`);
     CalendarActions._dragOrderId=null;
     // 如果当前选中了这个商单，关闭详情面板（因为商单可能移到别的日期了）
@@ -2523,7 +2840,29 @@ const BrandDetailActions={
 
 // ===== SECTION 8: 应用初始化 =====
 document.addEventListener('DOMContentLoaded',()=>{
+  Tracker.init();  // 初始化数据采集
   Router.init();
+
+  // 隐藏管理面板：连续点击5次导航栏标题打开（仅本地调试用）
+  (function(){
+    let _clickCount=0,_lastClick=0;
+    document.getElementById('navTitle').addEventListener('click',function(){
+      const now=Date.now(); if(now-_lastClick<600)_clickCount++; else _clickCount=1; _lastClick=now;
+      if(_clickCount>=5){ _clickCount=0; const s=Tracker.getLocalSummary(); document.getElementById('adminPanelBody').innerHTML=
+        `<div style="font-size:13px;line-height:2;">
+          <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f0f0;"><span>匿名ID</span><span style="color:#667eea;font-weight:600;font-family:monospace">${s.anonymousId}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f0f0;"><span>累计事件数</span><span style="font-weight:600;color:#FF2442">${s.totalEventsTracked}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f0f0;"><span>事件类型数</span><span>${s.uniqueEventTypes}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f0f0;"><span>活跃天数</span><span>${s.activeDays}天</span></div>
+          <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f0f0;"><span>总访问次数</span><span>${s.totalSessions}次</span></div>
+          <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f0f0;"><span>首次使用</span><span>${s.firstVisit}</span></div>
+          <div style="padding:8px 0 4px;font-weight:600;">事件分布：</div>
+        </div>
+        <div style="max-height:200px;overflow-y:auto;font-size:12px;">
+        ${Object.entries(s.eventBreakdown).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:3px 8px;background:#f8f8f9;margin:2px 0;border-radius:6px;"><span style="color:#555">⬡ ${k}</span><span style="font-weight:600;color:#667eea">${v}</span></div>`).join('')}
+        </div>`; document.getElementById('adminPanel').style.display='flex'; }
+    });
+  })();
 });
 </script>
 </body>
