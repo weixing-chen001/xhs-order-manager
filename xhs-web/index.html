@@ -1842,7 +1842,7 @@ const PageRenderers={
         const oRA=Math.round(price*oR/100);
         const offRA=Math.round(price*offR/100);
         return `<div class="recent-item" onclick="Router.navigate('orderAdd',{id:\'${o.id}'})">
-        <div class="recent-top"><span class="recent-brand">${Utils.escapeHtml(o.brandName)}</span><span class="recent-price">¥${o.price}</span></div>
+        <div class="recent-top"><span class="recent-brand">${Utils.escapeHtml(o.brandName)}${o.scheduleDate?'<span style="font-size:11px;color:#AAA;font-weight:400;margin-left:6px">'+Utils.formatDate(o.scheduleDate)+'</span>':''}</span><span class="recent-price">¥${o.price}</span></div>
         <div class="recent-bottom"><span class="text-gray">${Utils.escapeHtml(o.productName)||'-'}</span><span class="tag ${o.progressInfo.cls}">${o.progressInfo.label}</span></div>
         ${o.profit.netProfit?`<div class="recent-profit">净利润：<span class="text-money">¥${Utils.formatMoney(o.profit.netProfit)}</span><span class="text-gray" style="margin-left:10px;font-size:11px">(${o.profit.profitRate}%)</span></div>`:''}
         ${(oRA>0||offRA>0)?`<div class="recent-rebate-row">
