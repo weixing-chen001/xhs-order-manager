@@ -1273,6 +1273,11 @@ const AccountActions={
   },
   getAll(){return Storage.getAccounts();},
   switchTo(id){
+    // 长按触发了编辑后，忽略这次点击（防止同时触发切换）
+    if(this._longPressTriggered){
+      this._longPressTriggered=false;
+      return;
+    }
     if(!id){Storage.setCurrentAccountId('');return;}
     Storage.setCurrentAccountId(id);
     CalendarState.year=0;CalendarState.month=0;CalendarState.selectedDate='';CalendarState.detailOrderId='';
@@ -1281,11 +1286,12 @@ const AccountActions={
   },
   // 长按编辑账号名称
   _longPressTimer:null,
+  _longPressTriggered:false,
   handleTabTouchStart(accId,e){
-    e.preventDefault();
+    this._longPressTriggered=false;
     this._longPressTimer=setTimeout(()=>{
+      this._longPressTriggered=true;
       this.showEdit(accId);
-      this._longPressTimer=null;
     },500);
   },
   handleTabTouchEnd(){
