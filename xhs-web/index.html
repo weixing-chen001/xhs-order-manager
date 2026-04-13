@@ -1892,6 +1892,12 @@ const PageRenderers={
     <!-- 快速录入卡片 -->
     <div class="card quick-entry-card">
       <div class="card-title">📝 新建商单</div>
+      ${(()=>{
+        const accs=AccountActions.getAll();
+        const curId=Storage.getCurrentAccountId();
+        if(accs.length<=1) return '';
+        return '<div style="margin-bottom:14px;"><div class="form-label">📱 归属账号</div><select class="picker-select" id="h_accountId">'+accs.map(a=>`<option value="${a.id}"${a.id===curId||(!curId&&a.id===accs[0].id)?' selected':''}>📱 ${Utils.escapeHtml(a.name)}</option>`).join('')+'</select></div>';
+      })()}
       <div class="form-row two-col">
         <div class="form-group col">
           <div class="form-label required">品牌名</div>
@@ -2462,7 +2468,7 @@ const HomeActions={
       contentType:document.getElementById('h_contentType').value,
       competitionRange:document.getElementById('h_competitionRange').value||'',
       notes:'',
-      accountId:Storage.getCurrentAccountId()||AccountActions.getAll()[0]?.id||'',
+      accountId:document.getElementById('h_accountId')?.value||Storage.getCurrentAccountId()||AccountActions.getAll()[0]?.id||'',
       createTime:Utils.today(),
       updateTime:Utils.today()
     };
