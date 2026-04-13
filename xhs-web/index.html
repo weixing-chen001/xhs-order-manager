@@ -2941,21 +2941,21 @@ const ReconciliationActions={
       <button class="recon-export-btn" onclick="ReconciliationActions.exportCSV()">📥 导出</button>
     </div>
     <div class="recon-summary" style="display:flex;gap:10px;margin-top:14px;">
-      <div style="flex:1;background:#fff;border-radius:12px;padding:20px 8px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08);" onclick="void(0)">
-        <p style="margin:0 0 4px;font-size:13px;color:#777;">📋 商单数</p>
+      <div style="flex:1;background:#fff;border-radius:12px;padding:20px 8px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08);">
         <p style="margin:0;font-size:24px;font-weight:700;color:#222;">${filtered.length}</p>
+        <p style="margin:6px 0 0;font-size:13px;color:#777;">商单数</p>
       </div>
       <div style="flex:1;background:#fff;border-radius:12px;padding:20px 8px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08);">
-        <p style="margin:0 0 4px;font-size:13px;color:#777;">💰 总收入</p>
         <p style="margin:0;font-size:24px;font-weight:700;color:var(--primary);">¥${Utils.formatMoney(totalRevenue)}</p>
+        <p style="margin:6px 0 0;font-size:13px;color:#777;">总收入</p>
       </div>
       <div style="flex:1;background:#fff;border-radius:12px;padding:20px 8px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08);">
-        <p style="margin:0 0 4px;font-size:13px;color:#777;">🏷️ 返点</p>
         <p style="margin:0;font-size:24px;font-weight:700;color:var(--text-orange);">¥${Utils.formatMoney(totalOnlineRebate+totalOfflineRebate)}</p>
+        <p style="margin:6px 0 0;font-size:13px;color:#777;">返点合计</p>
       </div>
       <div style="flex:1;background:#fff;border-radius:12px;padding:20px 8px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08);">
-        <p style="margin:0 0 4px;font-size:13px;color:#777;">✅ 净利润</p>
         <p style="margin:0;font-size:24px;font-weight:700;color:var(--text-green);">¥${Utils.formatMoney(totalNetProfit)}</p>
+        <p style="margin:6px 0 0;font-size:13px;color:#777;">净利润</p>
       </div>
     </div>
     <div class="recon-table-wrap"><table class="recon-table">
