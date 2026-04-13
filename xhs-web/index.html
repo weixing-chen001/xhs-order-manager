@@ -1197,27 +1197,27 @@ const Utils = {
 const Storage = {
   _k(k){return'xhs_v3_'+k;},
   getOrders(){try{return JSON.parse(localStorage.getItem(this._k('orders'))||'[]')}catch(e){return[]}},
-  saveOrder(order){let os=this.getOrders();const idx=os.findIndex(o=>o.id===order.id);if(idx>=0)os[idx]=order;else os.unshift(order);localStorage.setItem(this._k('orders'),JSON.stringify(os));return order;},
-  deleteOrder(id){localStorage.setItem(this._k('orders'),JSON.stringify(this.getOrders().filter(o=>o.id!==id)))},
+  saveOrder(order){let os=this.getOrders();const idx=os.findIndex(o=>o.id===order.id);if(idx>=0)os[idx]=order;else os.unshift(order);localStorage.setItem(this._k('orders'),JSON.stringify(os));CloudSync.wrapPush();return order;},
+  deleteOrder(id){localStorage.setItem(this._k('orders'),JSON.stringify(this.getOrders().filter(o=>o.id!==id)));CloudSync.wrapPush();},
   getOrderById(id){return this.getOrders().find(o=>o.id===id)},
   // ===== 账号管理（多账号）=====
   getAccounts(){try{let a=JSON.parse(localStorage.getItem(this._k('accounts'))||'[]');if(!a.length)a=[{id:'acc_1',name:'主号',color:'#FF2442',sort:0}];return a}catch(e){return[{id:'acc_1',name:'主号',color:'#FF2442',sort:0}]}},
-  saveAccounts(list){localStorage.setItem(this._k('accounts'),JSON.stringify(list))},
+  saveAccounts(list){localStorage.setItem(this._k('accounts'),JSON.stringify(list));CloudSync.wrapPush();},
   saveAccount(acc){let list=this.getAccounts();const idx=list.findIndex(a=>a.id===acc.id);if(idx>=0)list[idx]=acc;else list.push(acc);this.saveAccounts(list);return acc;},
   deleteAccount(id){let list=this.getAccounts().filter(a=>a.id!==id);if(!list.length)list=[{id:'acc_1',name:'主号',color:'#FF2442',sort:0}];this.saveAccounts(list)},
   // 获取当前选中的账号ID
   getCurrentAccountId(){return localStorage.getItem(this._k('currentAccountId'))||''},
   setCurrentAccountId(id){localStorage.setItem(this._k('currentAccountId'),id||'')},
   getBrands(){try{return JSON.parse(localStorage.getItem(this._k('brands'))||'[]')}catch(e){return[]}},
-  saveBrand(b){let bs=this.getBrands();const idx=bs.findIndex(x=>x.id===b.id);if(idx>=0)bs[idx]=b;else bs.unshift(b);localStorage.setItem(this._k('brands'),JSON.stringify(bs));return b;},
-  deleteBrand(id){localStorage.setItem(this._k('brands'),JSON.stringify(this.getBrands().filter(b=>b.id!==id)))},
+  saveBrand(b){let bs=this.getBrands();const idx=bs.findIndex(x=>x.id===b.id);if(idx>=0)bs[idx]=b;else bs.unshift(b);localStorage.setItem(this._k('brands'),JSON.stringify(bs));CloudSync.wrapPush();return b;},
+  deleteBrand(id){localStorage.setItem(this._k('brands'),JSON.stringify(this.getBrands().filter(b=>b.id!==id)));CloudSync.wrapPush();},
   getBrandById(id){return this.getBrands().find(b=>b.id===id)},
   getRebates(){try{return JSON.parse(localStorage.getItem(this._k('rebates'))||'[]')}catch(e){return[]}},
   saveRebate(r){let rs=this.getRebates();const idx=rs.findIndex(x=>x.id===r.id);if(idx>=0)rs[idx]=r;else rs.unshift(r);localStorage.setItem(this._k('rebates'),JSON.stringify(rs));return r;},
   deleteRebate(id){localStorage.setItem(this._k('rebates'),JSON.stringify(this.getRebates().filter(r=>r.id!==id)))},
   getQuoteTemplates(){try{return JSON.parse(localStorage.getItem(this._k('quoteTemplates'))||'[]')||(function(){const t=[{id:Utils.genId(),name:'图文笔记',basePrice:3000,desc:'图文种草笔记'},{id:Utils.genId(),name:'视频笔记',basePrice:8000,desc:'短视频种草'},{id:Utils.genId(),name:'直播带货',basePrice:15000,desc:'直播间推广'}];localStorage.setItem('xhs_v3_quoteTemplates',JSON.stringify(t));return t})()}catch(e){return[]}},
-  saveQuoteTemplate(t){let ts=this.getQuoteTemplates();const idx=ts.findIndex(x=>x.id===t.id);if(idx>=0)ts[idx]=t;else ts.unshift(t);localStorage.setItem(this._k('quoteTemplates'),JSON.stringify(ts));return t;},
-  deleteQuoteTemplate(id){localStorage.setItem(this._k('quoteTemplates'),JSON.stringify(this.getQuoteTemplates().filter(t=>t.id!==id)))},
+  saveQuoteTemplate(t){let ts=this.getQuoteTemplates();const idx=ts.findIndex(x=>x.id===t.id);if(idx>=0)ts[idx]=t;else ts.unshift(t);localStorage.setItem(this._k('quoteTemplates'),JSON.stringify(ts));CloudSync.wrapPush();return t;},
+  deleteQuoteTemplate(id){localStorage.setItem(this._k('quoteTemplates'),JSON.stringify(this.getQuoteTemplates().filter(t=>t.id!==id)));CloudSync.wrapPush();},
   // 数据迁移：从旧版导入
   migrateOldData(){
     try{
@@ -3285,7 +3285,15 @@ const BrandDetailActions={
 // ===== SECTION 8: 应用初始化 =====
 document.addEventListener('DOMContentLoaded',()=>{
   Tracker.init();  // 初始化数据采集
-  Router.init();
+  // 检查是否有已保存的房间码
+  const savedRoomId=localStorage.getItem('_xhs_roomId');
+  if(savedRoomId){
+    // 有保存的房间码，自动连接
+    CloudSync.quickJoin(savedRoomId);
+  }else{
+    // 没有房间码，显示欢迎页
+    CloudSync.showWelcome();
+  }
 
   // 隐藏管理面板：连续点击5次导航栏标题打开（仅本地调试用）
   (function(){
@@ -3308,6 +3316,148 @@ document.addEventListener('DOMContentLoaded',()=>{
     });
   })();
 });
+</script>
+<!-- 腾讯云开发 SDK -->
+<script src="https://cdn-go.cn/tcb/2.8.1/dist/cloudbase.full.js"></script>
+<script>
+// ===== 云同步模块 =====
+const CloudSync={
+  db:null,
+  envId:'xhsxitong-1g7bl1ke731d44ae',
+  roomId:'',
+  _inited:false,
+  _syncing:false,
+
+  async init(){
+    if(this._inited) return;
+    try{
+      const app=cloud.init({env:this.envId});
+      this.db=app.database();
+      this._inited=true;
+    }catch(e){console.warn('CloudSync init error:',e);}
+  },
+
+  // 获取或创建房间
+  async getRoom(roomCode){
+    await this.init();
+    if(!this.db) return null;
+    try{
+      const res=await this.db.collection('rooms').where({roomId:roomCode}).get();
+      return res.data.length>0?res.data[0]:null;
+    }catch(e){console.error('getRoom:',e);return null;}
+  },
+
+  async createRoom(roomCode){
+    await this.init();
+    if(!this.db) return false;
+    try{
+      await this.db.collection('rooms').add({roomId:roomCode,data:{orders:[],accounts:[],brands:[],quoteTemplates:[]},createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
+      return true;
+    }catch(e){console.error('createRoom:',e);return false;}
+  },
+
+  // 从云端加载数据到本地
+  async pullData(roomCode){
+    await this.init();
+    if(!this.db) return false;
+    try{
+      const room=await this.getRoom(roomCode);
+      if(!room) return false;
+      const d=room.data||{};
+      if(d.orders) localStorage.setItem(this._k('orders'),JSON.stringify(d.orders));
+      if(d.accounts) localStorage.setItem(this._k('accounts'),JSON.stringify(d.accounts));
+      if(d.brands) localStorage.setItem(this._k('brands'),JSON.stringify(d.brands));
+      if(d.quoteTemplates) localStorage.setItem(this._k('quoteTemplates'),JSON.stringify(d.quoteTemplates));
+      this.roomId=roomCode;
+      localStorage.setItem('_xhs_roomId',roomCode);
+      return true;
+    }catch(e){console.error('pullData:',e);return false;}
+  },
+
+  // 把本地数据推送到云端
+  async pushData(){
+    if(!this.db||!this.roomId||this._syncing) return false;
+    this._syncing=true;
+    try{
+      const payload={
+        orders:JSON.parse(localStorage.getItem(this._k('orders'))||'[]'),
+        accounts:JSON.parse(localStorage.getItem(this._k('accounts'))||'[]'),
+        brands:JSON.parse(localStorage.getItem(this._k('brands'))||'[]'),
+        quoteTemplates:JSON.parse(localStorage.getItem(this._k('quoteTemplates'))||'[]'),
+        updatedAt:new Date().toISOString()
+      };
+      await this.db.collection('rooms').where({roomId:this.roomId}).update({data:payload});
+      return true;
+    }catch(e){console.error('pushData:',e);return false;}finally{this._syncing=false;}
+  },
+
+  // 包装Storage方法，每次写操作后自动推送
+  wrapPush(){
+    if(!this.roomId) return; // 没登录不推
+    clearTimeout(this._pushTimer);
+    this._pushTimer=setTimeout(()=>this.pushData(),800);
+  },
+  _pushTimer:null,
+
+  _k(key){return 'xhs_'+key;},
+
+  // 显示欢迎页（房间码输入）
+  showWelcome(){
+    const savedRoomId=localStorage.getItem('_xhs_roomId');
+    let html=`<div id="welcomeOverlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#FF2442,#FF6B81);z-index:99999;display:flex;align-items:center;justify-content:center;">
+      <div style="width:90%;max-width:380px;background:#fff;border-radius:24px;padding:36px 28px 28px;box-shadow:0 20px 60px rgba(0,0,0,.2);">
+        <div style="text-align:center;margin-bottom:28px;">
+          <div style="font-size:48px;margin-bottom:10px;">📋</div>
+          <div style="font-size:22px;font-weight:700;color:#333;">商单管家</div>
+          <div style="font-size:13px;color:#999;margin-top:6px;">小红书博主专用 · 多端数据同步版</div>
+        </div>
+        <div class="form-group"><div class="form-label">🔑 房间码 / 邀请码</div><input class="form-input" id="wc_roomCode" placeholder="${savedRoomId?'已保存的房间码':'输入房间码，或留空创建新房间'}" value=""${savedRoomId?' style="border-color:'+((savedRoomId.match(/.{1,4}/g)||[]).join(' ')||'')+';"':''} style="text-align:center;font-size:18px;font-weight:600;letter-spacing:3px;padding:12px 14px;height:auto;"/></div>
+        ${savedRoomId?'<div style="margin-bottom:16px;"><button onclick="CloudSync.quickJoin(\'${savedRoomId}\')" style="width:100%;padding:14px;border-radius:12px;background:#f5f5f5;color:#666;font-size:14px;font-weight:500;">✅ 使用已保存的房间码进入</button></div>':''}
+        <button class="modal-btn confirm" style="width:100%;padding:15px;border-radius:12px;font-size:16px;font-weight:600;" onclick="CloudSync.doJoin()">进入工作台 🚀</button>
+        <div style="margin-top:18px;text-align:center;">
+          <span style="font-size:12px;color:#bbb;">没有房间码？直接点「进入」会自动创建新房间</span>
+        </div>
+      </div></div>`;
+    document.body.insertAdjacentHTML('beforeend',html);
+    if(savedRoomId) document.getElementById('wc_roomCode').value=savedRoomCode;
+    // 回车提交
+    setTimeout(()=>{const el=document.getElementById('wc_roomCode');if(el)el.addEventListener('keydown',e=>{if(e.key==='Enter')CloudSync.doJoin();});},100);
+  },
+
+  async quickJoin(code){
+    const overlay=document.getElementById('welcomeOverlay');
+    if(overlay){overlay.style.opacity='0';overlay.style.transition='opacity .25s';setTimeout(()=>{overlay.remove();},250);}
+    UI.toast('正在同步数据...');
+    const ok=await this.pullData(code);
+    if(ok){
+      UI.toast('数据已同步 ✅');
+      Router.init();
+    }else{
+      // 创建新房间
+      await this.createRoom(code);
+      await this.pullData(code);
+      UI.toast('已创建新房间 ✅');
+      Router.init();
+    }
+  },
+
+  async doJoin(){
+    const code=(document.getElementById('wc_roomCode')?.value||'').trim().toUpperCase() || 'ROOM'+Date.now().toString(36).toUpperCase();
+    const overlay=document.getElementById('welcomeOverlay');
+    if(overlay){overlay.style.opacity='0';overlay.style.transition='opacity .25s';setTimeout(()=>{overlay.remove();},250);}
+    UI.toast('正在连接...');
+    const room=await this.getRoom(code);
+    if(room){
+      await this.pullData(code);
+      UI.toast('加入房间成功 ✅');
+    }else{
+      await this.createRoom(code);
+      await this.pullData(code);
+      UI.toast('新房间创建成功 ✅');
+    }
+    Router.init();
+  }
+};
 </script>
 </body>
 </html>
