@@ -1293,7 +1293,7 @@ const AccountActions={
     UI.toast('已删除「'+acc.name+'」');
   },
   renderSwitchBar(currentPage){
-    const accounts=this.getAll();if(accounts.length<=1) return '';
+    const accounts=this.getAll();
     const currentId=Storage.getCurrentAccountId();
     return '<div class="account-switch-bar" style="display:flex;gap:8px;padding:10px 14px 0;overflow-x:auto;-webkit-overflow-scrolling:touch;">'
       +accounts.map(a=>{
@@ -1986,11 +1986,11 @@ const PageRenderers={
     <div style="overflow-y:auto;max-height:calc(100vh - 120px);">
 
     <!-- 账号选择 -->
-    ${accounts.length>1?`<div class="section-card"><div class="section-title">📱 所属账号</div>
+    <div class="section-card"><div class="section-title">📱 所属账号</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
       ${accounts.map((a,i)=>{const sel=a.id===form.accountId;return '<label style="flex:1;min-width:80px;padding:10px 12px;border-radius:10px;border:2px solid '+(sel?a.color:'#EEE')+';background:'+(sel?a.color+'12':'#fff')+';cursor:pointer;text-align:center;font-size:14px;font-weight:'+(sel?'600':'400')+';color:'+(sel?a.color:'#888')+'"><input type="radio" name="a_accountId" value="'+a.id+'" style="display:none"'+(sel?' checked':'')+' onclick="document.getElementById(\'a_accountId\').value=\''+a.id+'\';this.closest(\'form\').querySelectorAll(\'label[style*=border]\').forEach(l=>{l.style.borderColor=\'#EEE\';l.style.background=\'#fff\';l.style.fontWeight=\'400\';l.style.color=\'#888\'});this.parentElement.style.borderColor=\''+a.color+'\';this.parentElement.style.background=\''+a.color+'12\';this.parentElement.style.fontWeight=\'600\';this.parentElement.style.color=\''+a.color+'\';">📱 '+Utils.escapeHtml(a.name)+'</label>'}).join('')}
       <input type="hidden" id="a_accountId" value="${form.accountId||accounts[0]?.id||''}"/>
-    </div></div>`:''}
+    </div></div>
 
     <!-- 基本信息 -->
     <div class="section-card"><div class="section-title">📦 品牌与产品</div>
