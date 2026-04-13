@@ -58,6 +58,10 @@ a{text-decoration:none;color:inherit;}
 .tab-item.active{color:var(--primary);}
 .tab-item.active::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:28px;height:3px;background:var(--primary);border-radius:0 0 3px 3px;}
 
+/* ===== 账号切换栏 ===== */
+.acc-tab{transition:all .15s ease;}
+.acc-tab:active{transform:scale(0.95);opacity:.7;}
+
 /* ===== 卡片通用 ===== */
 .card{margin:14px;padding:18px;background:var(--white);border-radius:var(--radius-lg);box-shadow:var(--shadow);}
 .card-title{font-size:17px;font-weight:600;color:var(--text-primary);margin-bottom:14px;}
@@ -1275,6 +1279,27 @@ const AccountActions={
     const curPage=document.querySelector('.tab-item.active')?.getAttribute('data-page')||'home';
     Router.navigate(curPage);
   },
+  // 长按编辑账号名称
+  _longPressTimer:null,
+  handleTabTouchStart(accId,e){
+    e.preventDefault();
+    this._longPressTimer=setTimeout(()=>{
+      this.showEdit(accId);
+      this._longPressTimer=null;
+    },500);
+  },
+  handleTabTouchEnd(){
+    if(this._longPressTimer){clearTimeout(this._longPressTimer);this._longPressTimer=null;}
+  },
+  showEdit(id){
+    const acc=this.getAll().find(a=>a.id===id);if(!acc)return;
+    UI.showModal('<div class="modal-header"><span class="modal-title-b">编辑账号</span><span class="modal-close-b" onclick="UI.closeModal()">✕</span></div>'
+      +'<div style="margin-top:16px"><div class="form-group"><div class="form-label required">账号名称</div><input class="form-input" id="acc_edit_name" value="'+Utils.escapeHtml(acc.name)+'" placeholder="输入账号名称" maxlength="10"/></div></div>'
+      +'<div style="display:flex;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid #eee;">'
+      +'<button style="flex:1;padding:12px;border-radius:10px;background:#FF4D4F;color:#fff;font-size:14px;cursor:pointer;" onclick="if(confirm(\'确定删除账号「'+Utils.escapeHtml(acc.name)+'」吗？\')){AccountActions.del(\''+acc.id+'\');UI.closeModal();}">🗑 删除</button>'
+      +'<button class="modal-btn confirm" onclick="var n=document.getElementById(\'acc_edit_name\').value;if(AccountActions.edit(\''+acc.id+'\',n)){UI.closeModal();}">保存</button>'
+      +'</div>');
+  },
   add(name){
     if(!name.trim()){UI.toast('请输入账号名称');return null;}
     const accounts=this.getAll();
@@ -1298,7 +1323,7 @@ const AccountActions={
     return '<div class="account-switch-bar" style="display:flex;gap:8px;padding:10px 14px 0;overflow-x:auto;-webkit-overflow-scrolling:touch;">'
       +accounts.map(a=>{
         const isActive=a.id===currentId||(!currentId&&a.id===accounts[0].id);
-        return '<button class="acc-tab '+(isActive?'active':'')+'" onclick="AccountActions.switchTo(\''+a.id+'\')" style="flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:500;border:1.5px solid '+(isActive?a.color:'#DDD')+';background:'+(isActive?a.color+'15':'#fff')+';color:'+(isActive?a.color:'#666')+';cursor:pointer;white-space:nowrap;">'+Utils.escapeHtml(a.name)+'</button>';
+        return '<button class="acc-tab '+(isActive?'active':'')+'" data-acc-id="'+a.id+'" onclick="AccountActions.switchTo(\''+a.id+'\')" ontouchstart="AccountActions.handleTabTouchStart(\''+a.id+'\',event)" ontouchend="AccountActions.handleTabTouchEnd()" ontouchcancel="AccountActions.handleTabTouchEnd()" oncontextmenu="event.preventDefault();AccountActions.showEdit(\''+a.id+'\');return false;" style="flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:500;border:1.5px solid '+(isActive?a.color:'#DDD')+';background:'+(isActive?a.color+'15':'#fff')+';color:'+(isActive?a.color:'#666')+';cursor:pointer;white-space:nowrap;-webkit-user-select:none;user-select:none;">'+Utils.escapeHtml(a.name)+'</button>';
       }).join('')
       +'<button class="acc-tab" onclick="AccountActions.showAdd()" style="flex-shrink:0;padding:6px 12px;border-radius:20px;font-size:13px;border:1.5px dashed #CCC;background:#fff;color:#999;cursor:pointer;white-space:nowrap;">+号</button>'
     +'</div>';
