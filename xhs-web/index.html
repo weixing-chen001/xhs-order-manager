@@ -580,9 +580,7 @@ a{text-decoration:none;color:inherit;}
 .recon-toolbar{display:flex;align-items:center;gap:10px;padding:12px 0;position:sticky;top:48px;z-index:10;background:var(--white);}
 .recon-month-select{flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;color:var(--text-primary);background:#fff;}
 .recon-export-btn{white-space:nowrap;padding:8px 16px;background:var(--primary);color:#fff;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:none;}
-.recon-summary{display:flex;gap:8px;margin-top:14px;}
-.recon-sum-card{flex:1;background:var(--white);border-radius:var(--radius-lg);padding:18px 6px;box-shadow:var(--shadow-sm);text-align:center;}
-.recon-sum-val{font-size:20px;font-weight:700;color:var(--text-primary);}
+/* recon summary - all inline styles */
 .recon-sum-val.money{color:var(--primary);}
 .recon-sum-val.profit{color:var(--text-green);}
 .recon-table-wrap{margin-top:14px;background:var(--white);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-sm);overflow-x:auto;-webkit-overflow-scrolling:touch;}
@@ -2942,11 +2940,23 @@ const ReconciliationActions={
       <select class="recon-month-select" id="recon_month" onchange="ReconciliationActions.changeMonth()">${monthOpts}</select>
       <button class="recon-export-btn" onclick="ReconciliationActions.exportCSV()">📥 导出</button>
     </div>
-    <div class="recon-summary">
-      <div class="recon-sum-card"><b style="font-size:14px;color:#333;display:block;margin-bottom:8px;">商单数</b><div class="recon-sum-val">${filtered.length}</div></div>
-      <div class="recon-sum-card"><b style="font-size:14px;color:#333;display:block;margin-bottom:8px;">总收入</b><div class="recon-sum-val money">¥${Utils.formatMoney(totalRevenue)}</div></div>
-      <div class="recon-sum-card"><b style="font-size:14px;color:#333;display:block;margin-bottom:8px;">返点合计</b><div class="recon-sum-val" style="color:var(--text-orange);font-weight:700;">¥${Utils.formatMoney(totalOnlineRebate+totalOfflineRebate)}</div></div>
-      <div class="recon-sum-card"><b style="font-size:14px;color:#333;display:block;margin-bottom:8px;">净利润</b><div class="recon-sum-val profit">¥${Utils.formatMoney(totalNetProfit)}</div></div>
+    <div class="recon-summary" style="display:flex;gap:10px;margin-top:14px;">
+      <div class="recon-sum-card" style="flex:1;background:#fff;border-radius:12px;padding:16px 6px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08);">
+        <span style="font-size:13px;color:#777;display:inline-block;margin-bottom:6px;">商单数</span><br/>
+        <strong style="font-size:24px;color:#222;">${filtered.length}</strong>
+      </div>
+      <div class="recon-sum-card" style="flex:1;background:#fff;border-radius:12px;padding:16px 6px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08);">
+        <span style="font-size:13px;color:#777;display:inline-block;margin-bottom:6px;">总收入</span><br/>
+        <strong style="font-size:24px;color:var(--primary);">¥${Utils.formatMoney(totalRevenue)}</strong>
+      </div>
+      <div class="recon-sum-card" style="flex:1;background:#fff;border-radius:12px;padding:16px 6px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08);">
+        <span style="font-size:13px;color:#777;display:inline-block;margin-bottom:6px;">返点合计</span><br/>
+        <strong style="font-size:24px;color:var(--text-orange);">¥${Utils.formatMoney(totalOnlineRebate+totalOfflineRebate)}</strong>
+      </div>
+      <div class="recon-sum-card" style="flex:1;background:#fff;border-radius:12px;padding:16px 6px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08);">
+        <span style="font-size:13px;color:#777;display:inline-block;margin-bottom:6px;">净利润</span><br/>
+        <strong style="font-size:24px;color:var(--text-green);">¥${Utils.formatMoney(totalNetProfit)}</strong>
+      </div>
     </div>
     <div class="recon-table-wrap"><table class="recon-table">
     <thead><tr>
