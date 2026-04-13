@@ -1,1 +1,1 @@
-{"version": 2, "builds": [{"src": "xhs-web/**", "use": "@vercel/static"}], "routes": [{"src": "/.*", "dest": "/xhs-web/index.html"}]}
+{"version": 2, "builds": [{"src": "xhs-web/**", "use": "@vercel/static"}, {"src": "xhs-web/api/**/*.js", "use": "@vercel/node"}], "routes": [{"src": "/api/track", "dest": "/xhs-web/api/track.js"}, {"src": "/(.*)", "dest": "/xhs-web/index.html"}]}
