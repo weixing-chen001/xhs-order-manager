@@ -1196,6 +1196,14 @@ const Storage = {
   saveOrder(order){let os=this.getOrders();const idx=os.findIndex(o=>o.id===order.id);if(idx>=0)os[idx]=order;else os.unshift(order);localStorage.setItem(this._k('orders'),JSON.stringify(os));return order;},
   deleteOrder(id){localStorage.setItem(this._k('orders'),JSON.stringify(this.getOrders().filter(o=>o.id!==id)))},
   getOrderById(id){return this.getOrders().find(o=>o.id===id)},
+  // ===== 账号管理（多账号）=====
+  getAccounts(){try{let a=JSON.parse(localStorage.getItem(this._k('accounts'))||'[]');if(!a.length)a=[{id:'acc_1',name:'主号',color:'#FF2442',sort:0}];return a}catch(e){return[{id:'acc_1',name:'主号',color:'#FF2442',sort:0}]}},
+  saveAccounts(list){localStorage.setItem(this._k('accounts'),JSON.stringify(list))},
+  saveAccount(acc){let list=this.getAccounts();const idx=list.findIndex(a=>a.id===acc.id);if(idx>=0)list[idx]=acc;else list.push(acc);this.saveAccounts(list);return acc;},
+  deleteAccount(id){let list=this.getAccounts().filter(a=>a.id!==id);if(!list.length)list=[{id:'acc_1',name:'主号',color:'#FF2442',sort:0}];this.saveAccounts(list)},
+  // 获取当前选中的账号ID
+  getCurrentAccountId(){return localStorage.getItem(this._k('currentAccountId'))||''},
+  setCurrentAccountId(id){localStorage.setItem(this._k('currentAccountId'),id||'')},
   getBrands(){try{return JSON.parse(localStorage.getItem(this._k('brands'))||'[]')}catch(e){return[]}},
   saveBrand(b){let bs=this.getBrands();const idx=bs.findIndex(x=>x.id===b.id);if(idx>=0)bs[idx]=b;else bs.unshift(b);localStorage.setItem(this._k('brands'),JSON.stringify(bs));return b;},
   deleteBrand(id){localStorage.setItem(this._k('brands'),JSON.stringify(this.getBrands().filter(b=>b.id!==id)))},
@@ -1251,6 +1259,56 @@ const Storage = {
 };
 Storage.migrateOldData();
 Storage.migrateRebateToBrands();
+
+// ===== 账号管理操作（多账号）=====
+const AccountActions={
+  getCurrent(){
+    const id=Storage.getCurrentAccountId();
+    const accounts=Storage.getAccounts();
+    return accounts.find(a=>a.id===id)||accounts[0];
+  },
+  getAll(){return Storage.getAccounts();},
+  switchTo(id){
+    if(!id){Storage.setCurrentAccountId('');return;}
+    Storage.setCurrentAccountId(id);
+    CalendarState.year=0;CalendarState.month=0;CalendarState.selectedDate='';CalendarState.detailOrderId='';
+    const curPage=document.querySelector('.tab-item.active')?.getAttribute('data-page')||'home';
+    Router.navigate(curPage);
+  },
+  add(name){
+    if(!name.trim()){UI.toast('请输入账号名称');return null;}
+    const accounts=this.getAll();
+    const colors=['#FF2442','#1890FF','#52c41a','#FA8C16','#722ED1'];
+    const acc={id:'acc_'+Utils.genId(),name:name.trim(),color:colors[accounts.length%colors.length],sort:accounts.length};
+    Storage.saveAccount(acc);UI.toast('已添加账号「'+acc.name+'」');return acc;
+  },
+  edit(id,name){
+    if(!name.trim()){UI.toast('请输入账号名称');return;}
+    const acc=this.getAll().find(a=>a.id===id);if(acc){acc.name=name.trim();Storage.saveAccount(acc);UI.toast('已修改');}
+  },
+  del(id){
+    const accounts=this.getAll();if(accounts.length<=1){UI.toast('至少保留一个账号');return;}
+    const acc=accounts.find(a=>a.id===id);Storage.deleteAccount(id);
+    if(Storage.getCurrentAccountId()===id)this.switchTo('');
+    UI.toast('已删除「'+acc.name+'」');
+  },
+  renderSwitchBar(currentPage){
+    const accounts=this.getAll();if(accounts.length<=1) return '';
+    const currentId=Storage.getCurrentAccountId();
+    return '<div class="account-switch-bar" style="display:flex;gap:8px;padding:10px 14px 0;overflow-x:auto;-webkit-overflow-scrolling:touch;">'
+      +accounts.map(a=>{
+        const isActive=a.id===currentId||(!currentId&&a.id===accounts[0].id);
+        return '<button class="acc-tab '+(isActive?'active':'')+'" onclick="AccountActions.switchTo(\''+a.id+'\')" style="flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:500;border:1.5px solid '+(isActive?a.color:'#DDD')+';background:'+(isActive?a.color+'15':'#fff')+';color:'+(isActive?a.color:'#666')+';cursor:pointer;white-space:nowrap;">'+Utils.escapeHtml(a.name)+'</button>';
+      }).join('')
+      +'<button class="acc-tab" onclick="AccountActions.showAdd()" style="flex-shrink:0;padding:6px 12px;border-radius:20px;font-size:13px;border:1.5px dashed #CCC;background:#fff;color:#999;cursor:pointer;white-space:nowrap;">+号</button>'
+    +'</div>';
+  },
+  showAdd(){
+    UI.showModal('<div class="modal-header"><span class="modal-title-b">添加小红书账号</span><span class="modal-close-b" onclick="UI.closeModal()">✕</span></div>'
+      +'<div style="margin-top:16px"><div class="form-group"><div class="form-label required">账号名称</div><input class="form-input" id="acc_name" placeholder="如：主号、小号A、品牌号" maxlength="10"/></div></div>'
+      +'<div class="modal-btns"><div class="modal-btn cancel" onclick="UI.closeModal()">取消</div><div class="modal-btn confirm" onclick="var n=document.getElementById(\'acc_name\').value;if(AccountActions.add(n)){UI.closeModal();}">添加</div></div>');
+  }
+};
 
 // ===== SECTION 3.5: 用户行为数据采集（匿名聚合） =====
 const Tracker = {
@@ -1906,12 +1964,13 @@ const PageRenderers={
     UI.setNav(isEdit?'编辑商单':'新建商单','',true);
 
     const brands=Storage.getBrands();
-    let form={brandName:'',productName:'',prContactName:'',prContactWx:'',scheduleDate:'',outlineDate:'',draftDate:'',price:'',onlineRebateRate:'',offlineRebateRate:'',potatoCost:'',laborCost:'',progress:'scheduled',contentType:'single',competitionRange:'',notes:''};
+    const accounts=AccountActions.getAll();
+    let form={brandName:'',productName:'',prContactName:'',prContactWx:'',scheduleDate:'',outlineDate:'',draftDate:'',price:'',onlineRebateRate:'',offlineRebateRate:'',potatoCost:'',laborCost:'',progress:'scheduled',contentType:'single',competitionRange:'',notes:'',accountId:Storage.getCurrentAccountId()||accounts[0]?.id||''};
 
     if(isEdit){
       const order=Storage.getOrderById(orderId);
       if(order){
-        form={brandName:order.brandName||'',productName:order.productName||'',prContactName:order.prContactName||'',prContactWx:order.prContactWx||'',scheduleDate:order.scheduleDate||'',outlineDate:order.outlineDate||'',draftDate:order.draftDate||'',price:String(order.price||''),onlineRebateRate:String(order.onlineRebateRate||''),offlineRebateRate:String(order.offlineRebateRate||''),potatoCost:String(order.potatoCost||''),laborCost:String(order.laborCost||''),progress:order.progress||'scheduled',contentType:order.contentType||'single',competitionRange:order.competitionRange||'',notes:order.notes||''};
+        form={brandName:order.brandName||'',productName:order.productName||'',prContactName:order.prContactName||'',prContactWx:order.prContactWx||'',scheduleDate:order.scheduleDate||'',outlineDate:order.outlineDate||'',draftDate:order.draftDate||'',price:String(order.price||''),onlineRebateRate:String(order.onlineRebateRate||''),offlineRebateRate:String(order.offlineRebateRate||''),potatoCost:String(order.potatoCost||''),laborCost:String(order.laborCost||''),progress:order.progress||'scheduled',contentType:order.contentType||'single',competitionRange:order.competitionRange||'',notes:order.notes||'',accountId:order.accountId||Storage.getCurrentAccountId()||accounts[0]?.id||''};
         OrderAddActions._originalOrder=order;
         OrderAddActions._orderId=orderId;
       }
@@ -1925,6 +1984,13 @@ const PageRenderers={
 
     let html=`<div class="page active">
     <div style="overflow-y:auto;max-height:calc(100vh - 120px);">
+
+    <!-- 账号选择 -->
+    ${accounts.length>1?`<div class="section-card"><div class="section-title">📱 所属账号</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      ${accounts.map((a,i)=>{const sel=a.id===form.accountId;return '<label style="flex:1;min-width:80px;padding:10px 12px;border-radius:10px;border:2px solid '+(sel?a.color:'#EEE')+';background:'+(sel?a.color+'12':'#fff')+';cursor:pointer;text-align:center;font-size:14px;font-weight:'+(sel?'600':'400')+';color:'+(sel?a.color:'#888')+'"><input type="radio" name="a_accountId" value="'+a.id+'" style="display:none"'+(sel?' checked':'')+' onclick="document.getElementById(\'a_accountId\').value=\''+a.id+'\';this.closest(\'form\').querySelectorAll(\'label[style*=border]\').forEach(l=>{l.style.borderColor=\'#EEE\';l.style.background=\'#fff\';l.style.fontWeight=\'400\';l.style.color=\'#888\'});this.parentElement.style.borderColor=\''+a.color+'\';this.parentElement.style.background=\''+a.color+'12\';this.parentElement.style.fontWeight=\'600\';this.parentElement.style.color=\''+a.color+'\';">📱 '+Utils.escapeHtml(a.name)+'</label>'}).join('')}
+      <input type="hidden" id="a_accountId" value="${form.accountId||accounts[0]?.id||''}"/>
+    </div></div>`:''}
 
     <!-- 基本信息 -->
     <div class="section-card"><div class="section-title">📦 品牌与产品</div>
@@ -2087,16 +2153,22 @@ const PageRenderers={
 
   // ==================== 日历视图 ====================
   calendar(){
-    UI.setNav('商单日历');
+    const curAccount=AccountActions.getCurrent();
+    UI.setNav('商单日历',''+(curAccount?'📱 '+curAccount.name:''),false);
     const now=new Date();
     let calYear=CalendarState.year||now.getFullYear();
     let calMonth=CalendarState.month||(now.getMonth()+1);
     CalendarState.selectedDate=CalendarState.selectedDate||'';
 
-    const firstDay=(new Date(calYear,calMonth-1,1).getDay()+6)%7; // 周一开头：周日→6个空格，周一→0个
+    const firstDay=(new Date(calYear,calMonth-1,1).getDay()+6)%7;
     const daysInMonth=new Date(calYear,calMonth,0).getDate();
 
-    const orders=Storage.getOrders();
+    let allOrders=Storage.getOrders();
+    // 按账号过滤：如果选中了账号，只显示该账号的商单（accountId 匹配或旧数据无accountId则显示全部）
+    if(curAccount){
+      allOrders=allOrders.filter(o=>!o.accountId||o.accountId===curAccount.id);
+    }
+    const orders=allOrders;
     const ordersMap={};
     // 大纲/初稿日期里程碑标注映射
     const milestoneMap={};
@@ -2221,7 +2293,9 @@ const PageRenderers={
       detailHtml=`<div class="day-detail empty-detail"><div class="empty-text">当天无商单安排</div><div class="add-for-date-btn" onclick="Router.navigate('orderAdd',{date:\'${CalendarState.selectedDate}'})">+ 添加商单到此日期</div></div>`;
     }
 
-    let html=`<div class="page active cal-page-wrap"><div class="cal-left">
+    let html=`<div class="page active cal-page-wrap">
+    ${AccountActions.renderSwitchBar('calendar')}
+    <div class="cal-left">
     <div class="month-nav">
       <span class="nav-month-btn" onclick="CalendarActions.prev()">‹</span>
       <span class="month-title">${calYear}年${calMonth}月</span>
@@ -2257,7 +2331,8 @@ const PageRenderers={
 
   // ==================== 数据统计 ====================
   stats(){
-    UI.setNav('数据统计');
+    const curAccount=AccountActions.getCurrent();
+    UI.setNav('数据统计',''+(curAccount?'📱 '+curAccount.name:''));
     StatsActions.period=StatsActions.period||'month';
     StatsActions.load();
   },
@@ -2276,7 +2351,8 @@ const PageRenderers={
 
   // ==================== 商单对账单 ====================
   reconciliation(){
-    UI.setNav('商单对账单','',true);
+    const curAccount=AccountActions.getCurrent();
+    UI.setNav('商单对账单',''+(curAccount?'📱 '+curAccount.name:''),true);
     ReconciliationActions.load();
   },
 
@@ -2352,6 +2428,7 @@ const HomeActions={
       contentType:document.getElementById('h_contentType').value,
       competitionRange:document.getElementById('h_competitionRange').value||'',
       notes:'',
+      accountId:Storage.getCurrentAccountId()||AccountActions.getAll()[0]?.id||'',
       createTime:Utils.today(),
       updateTime:Utils.today()
     };
@@ -2459,6 +2536,7 @@ const OrderAddActions={
         contentType:document.getElementById('a_contentType').value,
         competitionRange:document.getElementById('a_competitionRange').value||'',
         notes:(document.getElementById('a_notes').value||'').trim(),
+        accountId:document.getElementById('a_accountId')?.value||Storage.getCurrentAccountId()||AccountActions.getAll()[0]?.id||'',
         updateTime:Utils.today()
       };
       Storage.saveOrder(updated);
@@ -2486,6 +2564,7 @@ const OrderAddActions={
         contentType:document.getElementById('a_contentType').value,
         competitionRange:document.getElementById('a_competitionRange').value||'',
         notes:(document.getElementById('a_notes').value||'').trim(),
+        accountId:document.getElementById('a_accountId')?.value||Storage.getCurrentAccountId()||AccountActions.getAll()[0]?.id||'',
         createTime:Utils.today(),
         updateTime:Utils.today()
       };
@@ -2625,7 +2704,9 @@ CalendarActions={
 
 // --- 统计页操作 ---
 const StatsActions={period:'month',load(){
-  const orders=Storage.getOrders();
+  let orders=Storage.getOrders();
+  const curAccount=AccountActions.getCurrent();
+  if(curAccount) orders=orders.filter(o=>!o.accountId||o.accountId===curAccount.id);
   const period=this.period;
   const now=new Date();
 
@@ -2672,6 +2753,7 @@ const StatsActions={period:'month',load(){
   const stats={totalCount:validOrders.length,abnormalCount:abnormalOrders.length,totalNet:Math.round(totalNet),totalTax:Math.round(totalTax*100)/100,totalPotato:Math.round(totalPotato*100)/100,totalLabor:Math.round(totalLabor*100)/100,avgProfitRate:rateCount>0?Math.round(rateSum/rateCount*100)/100:0};
 
   let html=`<div class="page active">
+    ${AccountActions.renderSwitchBar('stats')}
     <div class="period-tabs">
       <div class="period-tab ${period==='month'?'active':''}" onclick="StatsActions.setPeriod('month')">本月</div>
       <div class="period-tab ${period==='quarter'?'active':''}" onclick="StatsActions.setPeriod('quarter')">本季</div>
@@ -2910,7 +2992,9 @@ const ReconciliationActions={
     this.render();
   },
   render(){
-    const orders=Storage.getOrders().map(o=>({...o,profit:Utils.calcProfit(o),progressInfo:Utils.getProgressInfo(o.progress)}));
+    let orders=Storage.getOrders().map(o=>({...o,profit:Utils.calcProfit(o),progressInfo:Utils.getProgressInfo(o.progress)}));
+    const curAccount=AccountActions.getCurrent();
+    if(curAccount) orders=orders.filter(o=>!o.accountId||o.accountId===curAccount.id);
     // 按月份过滤（按排期日期或创建时间）
     let filtered=orders.filter(o=>{
       if(!this._month) return true;
@@ -2936,6 +3020,7 @@ const ReconciliationActions={
     const monthOpts=months.map(m=>`<option value="${m}"${m===this._month?' selected':''}>${m}</option>`).join('');
 
     let html=`<div class="page active recon-page">
+    ${AccountActions.renderSwitchBar('reconciliation')}
     <div class="recon-toolbar">
       <select class="recon-month-select" id="recon_month" onchange="ReconciliationActions.changeMonth()">${monthOpts}</select>
       <button class="recon-export-btn" onclick="ReconciliationActions.exportCSV()">📥 导出</button>
