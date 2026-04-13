@@ -1,0 +1,1 @@
+{"version": 2, "builds": [{"src": "xhs-web/**", "use": "@vercel/static"}], "routes": [{"src": "/.*", "dest": "/xhs-web/index.html"}]}
