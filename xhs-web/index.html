@@ -1861,22 +1861,27 @@ const PageRenderers={
 
     const orders=Storage.getOrders();
     const curMonth=Utils.currentMonth();
+    const accounts=AccountActions.getAll();
 
-    // 本月有效商单
-    const validOrders=orders.filter(o=>(o.createTime||'').startsWith(curMonth)&&o.progress!=='abnormal');
-    const abnormalOrders=orders.filter(o=>(o.createTime||'').startsWith(curMonth)&&o.progress==='abnormal');
+    // 按账号分组统计利润
+    let grandTotalNet=0,grandValidCount=0,grandAbnormalCount=0;
+    const accountStats=accounts.map(a=>{
+      const accOrders=orders.filter(o=>!o.accountId||o.accountId===a.id);
+      const validOrders=accOrders.filter(o=>(o.createTime||'').startsWith(curMonth)&&o.progress!=='abnormal');
+      const abnormalOrders=accOrders.filter(o=>(o.createTime||'').startsWith(curMonth)&&o.progress==='abnormal');
+      let net=0; validOrders.forEach(o=>net+=Utils.calcProfit(o).netProfit);
+      grandTotalNet+=net; grandValidCount+=validOrders.length; grandAbnormalCount+=abnormalOrders.length;
+      return {...a,validOrders,abnormalOrders,totalNet:net,recentOrders:accOrders.slice(0,3).map(o=>({...o,profit:Utils.calcProfit(o),progressInfo:Utils.getProgressInfo(o.progress)}))};
+    });
 
-    let totalNet=0;
-    validOrders.forEach(o=>totalNet+=Utils.calcProfit(o).netProfit);
-
-    // 最近商单
-    const recentOrders=orders.slice(0,5).map(o=>({
+    // 最近商单（全局，不限账号）
+    const recentOrdersAll=orders.slice(0,5).map(o=>({
       ...o,
       profit:Utils.calcProfit(o),
       progressInfo:Utils.getProgressInfo(o.progress)
     }));
 
-    // 即将到期
+    // 即将到期（全局）
     const nowTs=Date.now();
     const upcoming=orders.filter(o=>{
       if(!o.scheduleDate)return false;
@@ -1938,17 +1943,31 @@ const PageRenderers={
       </div>
     </div>
 
-    <!-- 本月利润概览 -->
+    <!-- 本月利润概览（多账号分栏） -->
+    ${accounts.length>1?`
+    <div class="card" style="padding:14px 16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <span class="card-title" style="margin:0;">💰 本月预期利润</span>
+        <span style="font-size:13px;color:#888;">合计 ¥${Utils.formatMoney(Math.round(grandTotalNet))}（${grandValidCount}单）</span>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        ${accountStats.map(a=>`<div style="flex:1;min-width:140px;background:${a.color+'08'};border-radius:10px;padding:12px 14px;border-left:3px solid ${a.color};">
+          <div style="font-size:13px;color:#666;margin-bottom:6px;font-weight:500;">📱 ${Utils.escapeHtml(a.name)}</div>
+          <div style="font-size:20px;font-weight:700;color:#222;">¥${Utils.formatMoney(Math.round(a.totalNet))}</div>
+          <div style="font-size:11px;color:#999;margin-top:4px;">${a.validOrders.length}单${a.abnormalOrders.length>0?' · 异常'+a.abnormalOrders.length+'单':''}</div>
+        </div>`).join('')}
+      </div>
+    </div>`:`
     <div class="card profit-overview">
       <div class="profit-header">
         <span class="card-title">💰 本月预期利润</span>
         <span class="profit-hint text-gray">（已定档商单汇总）</span>
       </div>
-      <div class="profit-num text-money-large">¥${Utils.formatMoney(Math.round(totalNet))}</div>
+      <div class="profit-num text-money-large">¥${Utils.formatMoney(Math.round(grandTotalNet))}</div>
       <div class="profit-meta">
-        <span class="meta-item">有效 ${validOrders.length} 单</span>${abnormalOrders.length>0?'<span class="meta-sep">|</span><span class="meta-item meta-abnormal">异常 ${abnormalOrders.length} 单</span>':''}
+        <span class="meta-item">有效 ${grandValidCount} 单</span>${grandAbnormalCount>0?'<span class="meta-sep">|</span><span class="meta-item meta-abnormal">异常 ${grandAbnormalCount} 单</span>':''}
       </div>
-    </div>`;
+    </div>`}`;
 
     // 近期排期
     if(upcoming.length>0){
@@ -1962,12 +1981,32 @@ const PageRenderers={
       </div></div>`;
     }
 
-    // 最近商单
-    if(recentOrders.length>0){
+    // 最近商单（按账号分组）
+    if(accounts.length>1 && accountStats.some(a=>a.recentOrders.length>0)){
+      html+=`
+    <div class="card" style="padding:16px 18px;">
+      <div class="card-title flex-between"><span>最近商单</span><span class="card-more text-gray" onclick="Router.navigate('list')">列表 &gt;</span></div>
+      ${accountStats.map(a=>a.recentOrders.length?`<div style="margin-bottom:14px;">
+        <div style="font-size:13px;color:${a.color};font-weight:600;margin-bottom:8px;padding-left:2px;border-left:3px solid ${a.color};padding-left:8px;">📱 ${Utils.escapeHtml(a.name)}</div>
+        <div class="recent-list">${a.recentOrders.map(o=>{
+          const oR=parseFloat(o.onlineRebateRate)||0;
+          const offR=parseFloat(o.offlineRebateRate)||0;
+          const price=parseFloat(o.price)||0;
+          const oRA=Math.round(price*oR/100);
+          const offRA=Math.round(price*offR/100);
+          return `<div class="recent-item" onclick="Router.navigate('orderAdd',{id:\'${o.id}'})">
+            <div class="recent-top"><span class="recent-brand">${Utils.escapeHtml(o.brandName)}${o.scheduleDate?'<span style="font-size:11px;color:#AAA;font-weight:400;margin-left:6px">'+Utils.formatDate(o.scheduleDate)+'</span>':''}</span><span class="recent-price">¥${o.price}</span></div>
+            <div class="recent-bottom"><span class="text-gray">${Utils.escapeHtml(o.productName)||'-'}</span><span class="tag ${o.progressInfo.cls}">${o.progressInfo.label}</span></div>
+            ${o.profit.netProfit?`<div class="recent-profit">净利润：<span class="text-money">¥${Utils.formatMoney(o.profit.netProfit)}</span></div>`:''}
+          </div>`}).join('')}
+        </div>
+      </div>`:'').join('')}
+    </div>`;
+    }else if(recentOrdersAll.length>0){
       html+=`
     <div class="card">
       <div class="card-title flex-between"><span>最近商单</span><span class="card-more text-gray" onclick="Router.navigate(\'list\')">列表 &gt;</span></div>
-      <div class="recent-list">${recentOrders.map(o=>{
+      <div class="recent-list">${recentOrdersAll.map(o=>{
         const oR=parseFloat(o.onlineRebateRate)||0;
         const offR=parseFloat(o.offlineRebateRate)||0;
         const price=parseFloat(o.price)||0;
@@ -1987,7 +2026,7 @@ const PageRenderers={
     }
 
     // 空状态
-    if(recentOrders.length===0&&validOrders.length===0){
+    if(recentOrdersAll.length===0&&grandValidCount===0){
       html+=`<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">还没有商单记录</div><div class="empty-sub">填写上方表单创建第一笔商单</div></div>`;
     }
     html+='<div style="height:20px"></div></div>';
