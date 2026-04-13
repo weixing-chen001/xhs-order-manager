@@ -2940,20 +2940,20 @@ const ReconciliationActions={
       <select class="recon-month-select" id="recon_month" onchange="ReconciliationActions.changeMonth()">${monthOpts}</select>
       <button class="recon-export-btn" onclick="ReconciliationActions.exportCSV()">📥 导出</button>
     </div>
-    <div style="display:flex;gap:10px;margin-top:14px;">
-      <div style="flex:1;background:#fff;border-radius:12px;padding:18px 8px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08);min-width:0;">
+    <div style="display:flex;gap:10px;margin-top:20px;">
+      <div style="flex:1;background:#fff;border-radius:12px;padding:22px 8px 18px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08);min-width:0;">
         <div style="font-size:22px;font-weight:700;color:#222;line-height:1.2;word-break:break-all;">${filtered.length}</div>
         <div style="font-size:12px;color:#888;margin-top:6px;">商单数</div>
       </div>
-      <div style="flex:1;background:#fff;border-radius:12px;padding:18px 8px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08);min-width:0;">
+      <div style="flex:1;background:#fff;border-radius:12px;padding:22px 8px 18px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08);min-width:0;">
         <div style="font-size:22px;font-weight:700;color:var(--primary);line-height:1.2;word-break:break-all;">¥${Utils.formatMoney(totalRevenue)}</div>
         <div style="font-size:12px;color:#888;margin-top:6px;">总收入</div>
       </div>
-      <div style="flex:1;background:#fff;border-radius:12px;padding:18px 8px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08);min-width:0;">
+      <div style="flex:1;background:#fff;border-radius:12px;padding:22px 8px 18px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08);min-width:0;">
         <div style="font-size:22px;font-weight:700;color:var(--text-orange);line-height:1.2;word-break:break-all;">¥${Utils.formatMoney(totalOnlineRebate+totalOfflineRebate)}</div>
         <div style="font-size:12px;color:#888;margin-top:6px;">返点合计</div>
       </div>
-      <div style="flex:1;background:#fff;border-radius:12px;padding:18px 8px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08);min-width:0;">
+      <div style="flex:1;background:#fff;border-radius:12px;padding:22px 8px 18px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08);min-width:0;">
         <div style="font-size:22px;font-weight:700;color:var(--text-green);line-height:1.2;word-break:break-all;">¥${Utils.formatMoney(totalNetProfit)}</div>
         <div style="font-size:12px;color:#888;margin-top:6px;">净利润</div>
       </div>
