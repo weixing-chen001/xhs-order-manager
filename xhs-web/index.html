@@ -576,18 +576,18 @@ a{text-decoration:none;color:inherit;}
 .call-inline{background:#e6f7ff;color:var(--text-blue);border-radius:6px;padding:0 14px;height:44px;line-height:44px;font-size:12px;flex-shrink:0;cursor:pointer;font-weight:600;}
 
 /* ===== 商单对账单 ===== */
-.recon-page{padding:0;}
-.recon-toolbar{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--white);border-bottom:1px solid var(--border);position:sticky;top:48px;z-index:10;}
+.recon-page{padding:0 14px;}
+.recon-toolbar{display:flex;align-items:center;gap:10px;padding:12px 0;position:sticky;top:48px;z-index:10;background:var(--white);}
 .recon-month-select{flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;color:var(--text-primary);background:#fff;}
 .recon-export-btn{white-space:nowrap;padding:8px 16px;background:var(--primary);color:#fff;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:none;}
-.recon-summary{display:flex;gap:0;margin:14px 14px 0;}
-.recon-sum-card{flex:1;background:var(--white);border-radius:var(--radius-lg);padding:14px;text-align:center;box-shadow:var(--shadow-sm);}
+.recon-summary{display:flex;gap:8px;margin-top:12px;}
+.recon-sum-card{flex:1;background:var(--white);border-radius:var(--radius-lg);padding:14px 8px;text-align:center;box-shadow:var(--shadow-sm);}
 .recon-sum-label{font-size:11px;color:var(--text-muted);margin-bottom:4px;}
-.recon-sum-val{font-size:18px;font-weight:700;color:var(--text-primary);}
+.recon-sum-val{font-size:16px;font-weight:700;color:var(--text-primary);word-break:break-all;}
 .recon-sum-val.money{color:var(--primary);}
 .recon-sum-val.profit{color:var(--text-green);}
-.recon-table-wrap{margin:14px;background:var(--white);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-sm);}
-.recon-table{width:100%;border-collapse:collapse;font-size:13px;}
+.recon-table-wrap{margin-top:14px;background:var(--white);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-sm);overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.recon-table{width:100%;min-width:900px;border-collapse:collapse;font-size:13px;}
 .recon-table thead{background:#FAFAFA;}
 .recon-table th{padding:10px 8px;text-align:left;font-size:12px;color:var(--text-muted);font-weight:600;white-space:nowrap;border-bottom:2px solid #EEE;}
 .recon-table td{padding:10px 8px;border-bottom:1px solid #F5F5F5;vertical-align:middle;color:var(--text-secondary);}
@@ -602,7 +602,10 @@ a{text-decoration:none;color:inherit;}
 .recon-tfoot td{background:#FAFAFA;font-weight:700;color:var(--text-primary);padding:12px 8px;border-top:2px solid #EEE;}
 @media(min-width:768px){
   .recon-page{padding:0 32px;}
-  .recon-toolbar{top:56px;}
+  .recon-toolbar{top:56px;padding:12px 32px;}
+  .recon-summary{gap:10px;margin-top:16px;}
+  .recon-sum-card{padding:18px 14px;}
+  .recon-sum-val{font-size:20px;word-break:normal;}
   .recon-table th,.recon-table td{padding:12px 14px;}
   .recon-brand-cell{max-width:200px;}
 }
