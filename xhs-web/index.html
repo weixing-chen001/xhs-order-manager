@@ -2093,7 +2093,7 @@ const PageRenderers={
     let calMonth=CalendarState.month||(now.getMonth()+1);
     CalendarState.selectedDate=CalendarState.selectedDate||'';
 
-    const firstDay=new Date(calYear,calMonth-1,1).getDay();
+    const firstDay=(new Date(calYear,calMonth-1,1).getDay()+6)%7; // 周一开头：周日→6个空格，周一→0个
     const daysInMonth=new Date(calYear,calMonth,0).getDate();
 
     const orders=Storage.getOrders();
@@ -2227,7 +2227,7 @@ const PageRenderers={
       <span class="month-title">${calYear}年${calMonth}月</span>
       <span class="nav-month-btn" onclick="CalendarActions.next()">›</span>
     </div>
-    <div class="week-header">${['日','一','二','三','四','五','六'].map(d=>`<span class="week-day">${d}</span>`).join('')}</div>
+    <div class="week-header">${['一','二','三','四','五','六','日'].map(d=>`<span class="week-day">${d}</span>`).join('')}</div>
     <div class="calendar-grid">${daysHtml}</div></div>
     <div class="cal-right">${detailHtml||'<div class="cal-right-empty"><span>📅 点击左侧日期或商单查看详情</span><br><span style="font-size:12px;color:#bbb;margin-top:6px;display:inline-block">再次点击同一商单可关闭</span></div>'}</div></div>`;
     document.getElementById('pageContent').innerHTML=html;
