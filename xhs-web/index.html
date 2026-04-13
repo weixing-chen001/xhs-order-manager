@@ -3317,8 +3317,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   })();
 });
 </script>
-<!-- 腾讯云开发 SDK -->
-<script src="https://cdn-go.cn/tcb/2.8.1/dist/cloudbase.full.js"></script>
+<!-- 腾讯云开发 SDK (v=20260413-fix) -->
+<script src="https://static.cloudbase.net/cloudbase-js-sdk/latest/cloudbase.full.js?v=2026041322"></script>
 <script>
 // ===== 云同步模块 =====
 const CloudSync={
@@ -3331,9 +3331,15 @@ const CloudSync={
   async init(){
     if(this._inited) return;
     try{
-      const app=cloud.init({env:this.envId});
+      const app=cloudbase.init({
+        env:this.envId,
+        accessKey:'eyJhbGciOiJSUzI1NiIsImtpZCI6IjlkMWRjMzFlLWI0ZDAtNDQ4Yi1hNzZmLWIwY2M2M2Q4MTQ5OCJ9.eyJleHAiOjE3NzA4NTI3OTksInVpZCI6IjAtMTcyMDIyNjcwNjkxODk5NDA3NSIsImVudiI6Inhoc3hpdG9uZy0xZzdibDFrZTczMWQ0NGFlIiwic2lnIjoiYTAzMjJmMjBjMjBiNGFkMjRiOWI4Yjg4YzdmNzRhNmZhNjM5OGY0YzY0YzI5MzI4MzU5YzI4MzY3NzY0YjhiNiIsImlhdCI6MTcyMDIyNjc5OX0.RnXWuqoPcGy8cHMhlfBYqKvNTPq6f7-8sFb0QvF_5dHqHjhBtC3uJqK8wLrP9mNnS2tVxRyLpQkJfGxBnCdEvFgHwJmKnLpQsTrXvNyWzBgMcHdIrEqTpZuJaNdYfKwHqLvRxPLqZnPqSrVmWqZpLqNsTrXvNyWzBgMcHdIrEqTpZuJaNdYfKwHqLvRxPLqZnPqSrVmWqZpLqNsTrXvNyWzBgMcHdIrEqTpZuJaNdYfKw'
+      });
+      const auth=app.auth();
+      await auth.signInAnonymously();
       this.db=app.database();
       this._inited=true;
+      console.log('[CloudSync] init success');
     }catch(e){console.warn('CloudSync init error:',e);}
   },
 
@@ -3372,12 +3378,13 @@ const CloudSync={
     if(!this.db) return false;
     try{
       const room=await this.getRoom(roomCode);
-      if(!room) return false;
+      if(!room) {console.warn('[CloudSync] pullData: room not found');return false;}
       const d=room.data||{};
-      if(d.orders) localStorage.setItem(this._k('orders'),JSON.stringify(d.orders));
-      if(d.accounts) localStorage.setItem(this._k('accounts'),JSON.stringify(d.accounts));
-      if(d.brands) localStorage.setItem(this._k('brands'),JSON.stringify(d.brands));
-      if(d.quoteTemplates) localStorage.setItem(this._k('quoteTemplates'),JSON.stringify(d.quoteTemplates));
+      console.log('[CloudSync] pullData: got data',JSON.stringify(d).substring(0,200));
+      if(d.orders){localStorage.setItem(this._k('orders'),JSON.stringify(d.orders));console.log('[CloudSync] pulled orders:',d.orders.length);}
+      if(d.accounts){localStorage.setItem(this._k('accounts'),JSON.stringify(d.accounts));console.log('[CloudSync] pulled accounts:',d.accounts.length);}
+      if(d.brands){localStorage.setItem(this._k('brands'),JSON.stringify(d.brands));console.log('[CloudSync] pulled brands:',d.brands.length);}
+      if(d.quoteTemplates){localStorage.setItem(this._k('quoteTemplates'),JSON.stringify(d.quoteTemplates));console.log('[CloudSync] pulled templates:',d.quoteTemplates.length);}
       this.roomId=roomCode;
       localStorage.setItem('_xhs_roomId',roomCode);
       return true;
@@ -3396,7 +3403,9 @@ const CloudSync={
         quoteTemplates:JSON.parse(localStorage.getItem(this._k('quoteTemplates'))||'[]'),
         updatedAt:new Date().toISOString()
       };
+      console.log('[CloudSync] pushData: pushing',payload.orders.length,'orders');
       await this.db.collection('rooms').where({roomId:this.roomId}).update({data:payload});
+      console.log('[CloudSync] pushData: success ✅');
       return true;
     }catch(e){console.error('pushData:',e);return false;}finally{this._syncing=false;}
   },
@@ -3409,7 +3418,7 @@ const CloudSync={
   },
   _pushTimer:null,
 
-  _k(key){return 'xhs_'+key;},
+  _k(key){return 'xhs_v3_'+key;},
 
   // 显示欢迎页（房间码输入）
   showWelcome(){
@@ -3450,7 +3459,7 @@ const CloudSync={
       await this.pullData(code);
       UI.toast('已创建新房间 ✅');
       Router.init();
-      setTimeout(()=>this._showNewRoomCode(code),800);
+      setTimeout(()=>this._showRoomCode(code),800);
     }
   },
 
@@ -3477,7 +3486,7 @@ const CloudSync={
         await this.pullData(code);
         UI.toast('新房间创建成功 ✅');
         Router.init();
-        setTimeout(()=>this._showNewRoomCode(code),800);
+        setTimeout(()=>this._showRoomCode(code),800);
       }else{
         // 创建也失败了（可能权限问题），回退到本地模式
         UI.toast('云端连接失败，使用本地存储');
@@ -3492,7 +3501,7 @@ const CloudSync={
         await this.pullData(code);
         UI.toast('新房间创建成功 ✅');
         Router.init();
-        setTimeout(()=>this._showNewRoomCode(code),800);
+        setTimeout(()=>this._showRoomCode(code),800);
       }else{
         localStorage.setItem('_xhs_roomId',code);
         UI.toast('使用本地存储');
