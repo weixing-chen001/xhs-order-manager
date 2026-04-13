@@ -3432,17 +3432,22 @@ const CloudSync={
     if(ok){
       UI.toast('数据已同步 ✅');
       Router.init();
+      // 显示当前房间码
+      setTimeout(()=>this._showRoomCode(code),500);
     }else{
       // 创建新房间
       await this.createRoom(code);
       await this.pullData(code);
       UI.toast('已创建新房间 ✅');
       Router.init();
+      setTimeout(()=>this._showNewRoomCode(code),800);
     }
   },
 
   async doJoin(){
-    const code=(document.getElementById('wc_roomCode')?.value||'').trim().toUpperCase() || 'ROOM'+Date.now().toString(36).toUpperCase();
+    const inputVal=(document.getElementById('wc_roomCode')?.value||'').trim().toUpperCase();
+    const code=inputVal || 'ROOM'+Date.now().toString(36).toUpperCase();
+    const isNewRoom=!inputVal;
     const overlay=document.getElementById('welcomeOverlay');
     if(overlay){overlay.style.opacity='0';overlay.style.transition='opacity .25s';setTimeout(()=>{overlay.remove();},250);}
     UI.toast('正在连接...');
@@ -3456,6 +3461,23 @@ const CloudSync={
       UI.toast('新房间创建成功 ✅');
     }
     Router.init();
+    setTimeout(()=>this._showRoomCode(code),isNewRoom?800:500);
+  },
+
+  // 显示当前房间码（顶部提示条）
+  _showRoomCode(code){
+    const bar=document.createElement('div');
+    bar.id='roomCodeBar';
+    bar.style.cssText='position:fixed;top:0;left:50%;transform:translateX(-50%);z-index:99998;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:10px 20px;border-radius:0 0 16px 16px;font-size:13px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 20px rgba(102,126,234,.4);max-width:720px;width:100%;';
+    bar.innerHTML=`<span>🔑 你的房间码：<b style="font-size:15px;letter-spacing:1px;">${code}</b></span><button onclick="CloudSync.copyRoomCode('${code}')" style="background:rgba(255,255,255,.25);border:none;color:#fff;padding:4px 12px;border-radius:8px;font-size:12px;cursor:pointer;white-space:nowrap;">复制</button><button onclick="this.parentElement.remove()" style="background:none;border:none;color:rgba(255,255,255,.7);font-size:18px;cursor:pointer;line-height:1;">✕</button>`;
+    document.body.appendChild(bar);
+    // 5秒后自动淡出
+    setTimeout(()=>{if(bar.parentNode){bar.style.transition='opacity .5s';bar.style.opacity='0';setTimeout(()=>{if(bar.parentNode)bar.remove();},500)}},8000);
+  },
+  copyRoomCode(code){
+    navigator.clipboard.writeText(code).then(()=>{
+      UI.toast('房间码已复制！发给你的同伴即可 📤');
+    }).catch(()=>{UI.toast('请手动复制：'+code)});
   }
 };
 </script>
