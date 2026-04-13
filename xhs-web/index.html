@@ -1281,8 +1281,11 @@ const AccountActions={
     if(!id){Storage.setCurrentAccountId('');return;}
     Storage.setCurrentAccountId(id);
     CalendarState.year=0;CalendarState.month=0;CalendarState.selectedDate='';CalendarState.detailOrderId='';
+    // 直接调用当前页面的渲染函数，避免 hash 不变时不刷新的问题
     const curPage=document.querySelector('.tab-item.active')?.getAttribute('data-page')||'home';
-    Router.navigate(curPage);
+    const renderer=PageRenderers[curPage];
+    if(renderer) renderer();
+    else Router.navigate(curPage);
   },
   // 长按编辑账号名称
   _longPressTimer:null,
