@@ -2945,10 +2945,10 @@ const ReconciliationActions={
       <button class="recon-export-btn" onclick="ReconciliationActions.exportCSV()">📥 导出</button>
     </div>
     <div class="recon-summary">
-      <div class="recon-sum-card"><div class="recon-sum-label">商单数</div><div class="recon-sum-val">${filtered.length}</div></div>
-      <div class="recon-sum-card"><div class="recon-sum-label">总收入</div><div class="recon-sum-val money">¥${Utils.formatMoney(totalRevenue)}</div></div>
-      <div class="recon-sum-card"><div class="recon-sum-label">返点合计</div><div class="recon-sum-val" style="color:var(--text-orange)">¥${Utils.formatMoney(totalOnlineRebate+totalOfflineRebate)}</div></div>
-      <div class="recon-sum-card"><div class="recon-sum-label">净利润</div><div class="recon-sum-val profit">¥${Utils.formatMoney(totalNetProfit)}</div></div>
+      <div class="recon-sum-card"><div style="font-size:13px;color:#555;margin-bottom:8px;line-height:1.4;">商单数</div><div class="recon-sum-val">${filtered.length}</div></div>
+      <div class="recon-sum-card"><div style="font-size:13px;color:#555;margin-bottom:8px;line-height:1.4;">总收入</div><div class="recon-sum-val money">¥${Utils.formatMoney(totalRevenue)}</div></div>
+      <div class="recon-sum-card"><div style="font-size:13px;color:#555;margin-bottom:8px;line-height:1.4;">返点合计</div><div class="recon-sum-val" style="color:var(--text-orange)">¥${Utils.formatMoney(totalOnlineRebate+totalOfflineRebate)}</div></div>
+      <div class="recon-sum-card"><div style="font-size:13px;color:#555;margin-bottom:8px;line-height:1.4;">净利润</div><div class="recon-sum-val profit">¥${Utils.formatMoney(totalNetProfit)}</div></div>
     </div>
     <div class="recon-table-wrap"><table class="recon-table">
     <thead><tr>
