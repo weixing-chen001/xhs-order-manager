@@ -3340,11 +3340,16 @@ const CloudSync={
   // 获取或创建房间
   async getRoom(roomCode){
     await this.init();
-    if(!this.db) return null;
+    if(!this.db) {console.warn('[CloudSync] db not initialized');return null;}
     try{
       const res=await this.db.collection('rooms').where({roomId:roomCode}).get();
+      console.log('[CloudSync] getRoom result:',res.data.length,'records');
       return res.data.length>0?res.data[0]:null;
-    }catch(e){console.error('getRoom:',e);return null;}
+    }catch(e){
+      console.error('[CloudSync] getRoom error:',e.message||e);
+      UI.toast('连接云端失败，请检查网络');
+      return null;
+    }
   },
 
   async createRoom(roomCode){
@@ -3352,8 +3357,13 @@ const CloudSync={
     if(!this.db) return false;
     try{
       await this.db.collection('rooms').add({roomId:roomCode,data:{orders:[],accounts:[],brands:[],quoteTemplates:[]},createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
+      console.log('[CloudSync] room created:',roomCode);
       return true;
-    }catch(e){console.error('createRoom:',e);return false;}
+    }catch(e){
+      console.error('[CloudSync] createRoom error:',e.message||e);
+      UI.toast('创建房间失败：'+(e.message||'未知错误'));
+      return false;
+    }
   },
 
   // 从云端加载数据到本地
@@ -3453,15 +3463,43 @@ const CloudSync={
     UI.toast('正在连接...');
     const room=await this.getRoom(code);
     if(room){
+      // 找到已有房间 → 加入
       await this.pullData(code);
       UI.toast('加入房间成功 ✅');
+      Router.init();
+      setTimeout(()=>this._showRoomCode(code),500);
+    }else if(inputVal){
+      // 用户输入了房间码但找不到
+      // 可能是权限问题，也可能是真的不存在
+      // 先尝试创建，如果失败说明可能是权限问题
+      const created=await this.createRoom(code);
+      if(created){
+        await this.pullData(code);
+        UI.toast('新房间创建成功 ✅');
+        Router.init();
+        setTimeout(()=>this._showNewRoomCode(code),800);
+      }else{
+        // 创建也失败了（可能权限问题），回退到本地模式
+        UI.toast('云端连接失败，使用本地存储');
+        localStorage.setItem('_xhs_roomId',code);
+        Router.init();
+        setTimeout(()=>this._showRoomCode(code),800);
+      }
     }else{
-      await this.createRoom(code);
-      await this.pullData(code);
-      UI.toast('新房间创建成功 ✅');
+      // 没输入房间码 → 创建新房间
+      const created=await this.createRoom(code);
+      if(created){
+        await this.pullData(code);
+        UI.toast('新房间创建成功 ✅');
+        Router.init();
+        setTimeout(()=>this._showNewRoomCode(code),800);
+      }else{
+        localStorage.setItem('_xhs_roomId',code);
+        UI.toast('使用本地存储');
+        Router.init();
+        setTimeout(()=>this._showRoomCode(code),800);
+      }
     }
-    Router.init();
-    setTimeout(()=>this._showRoomCode(code),isNewRoom?800:500);
   },
 
   // 显示当前房间码（顶部提示条）
